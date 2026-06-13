@@ -246,6 +246,9 @@ function init(){
   });
   el("f_targetDate").addEventListener("change", renderAll);
 
+  el("moonCalcBtn").addEventListener("click", renderMoonTable);
+  el("f_moonFromYear").value = new Date().getFullYear();
+
   updateTargetDateRow();
   renderAll();
 }
@@ -676,6 +679,122 @@ function renderAll(){
   }
 
   dataTables.innerHTML = html;
+}
+
+function buildHoroscopeLight(year,month,date,hour,minute,lat,lon,houseSystem){
+  const origin = new Origin({ year, month, date, hour, minute, latitude:lat, longitude:lon });
+  return new Horoscope({
+    origin, houseSystem, zodiac:"tropical",
+    aspectPoints:[], aspectWithPoints:[], aspectTypes:[], language:"en",
+  });
+}
+
+function progressedDateFromAge(birth, ageYears){
+  return new Date(birth.getTime() + ageYears*86400000);
+}
+function displayDateFromAge(birth, ageYears){
+  return new Date(birth.getTime() + ageYears*86400000*365.25);
+}
+
+function progressedMoonLonAtAge(p, birth, ageYears){
+  const prog = progressedDateFromAge(birth, ageYears);
+  const h = buildHoroscopeLight(prog.getFullYear(), prog.getMonth(), prog.getDate(), prog.getHours(), prog.getMinutes(), p.lat, p.lon, p.houseSystem);
+  return bodyLon(h, "moon");
+}
+
+function unwrapAngle(prev, curr){
+  const d = ((curr - prev) % 360 + 360) % 360;
+  return prev + d;
+}
+
+// セカンダリープログレッション・ムーンが各ネイタルハウスに入る日付を計算
+function computeProgressedMoonTable(p, natal, fromYear){
+  const dt = dateTimeFromProfile(p);
+  const birth = new Date(dt.year, dt.month, dt.date, dt.hour, dt.minute);
+  const fromDate = new Date(fromYear, 0, 1);
+
+  let ageAtFrom = (fromDate - birth)/86400000/365.25;
+  if(ageAtFrom < 0) ageAtFrom = 0;
+  const ageStart = Math.max(0, ageAtFrom - 3);
+  const ageEnd = ageStart + 30;
+
+  const samples = [];
+  for(let a=ageStart; a<=ageEnd; a+=1){
+    samples.push({ age:a, lon: progressedMoonLonAtAge(p, birth, a) });
+  }
+  const unwrapped = [samples[0].lon];
+  for(let i=1;i<samples.length;i++){
+    unwrapped.push(unwrapAngle(unwrapped[i-1], samples[i].lon));
+  }
+
+  const cusps = natal.Houses.map(h=>norm360(h.ChartPosition.StartPosition.Ecliptic.DecimalDegrees));
+
+  const events = [];
+  cusps.forEach((base, ci)=>{
+    const kMin = Math.floor((unwrapped[0]-base)/360) - 1;
+    const kMax = Math.ceil((unwrapped[unwrapped.length-1]-base)/360) + 1;
+    for(let k=kMin; k<=kMax; k++){
+      const target = base + 360*k;
+      if(target < unwrapped[0] || target > unwrapped[unwrapped.length-1]) continue;
+      let lo=-1;
+      for(let i=0;i<samples.length-1;i++){
+        if(unwrapped[i] <= target && target <= unwrapped[i+1]){ lo=i; break; }
+      }
+      if(lo===-1) continue;
+      let a0=samples[lo].age, a1=samples[lo+1].age, l0=unwrapped[lo];
+      for(let iter=0; iter<22; iter++){
+        const am = (a0+a1)/2;
+        const lm = unwrapAngle(l0, progressedMoonLonAtAge(p, birth, am));
+        if(lm < target){ a0=am; l0=lm; } else { a1=am; }
+      }
+      events.push({ date: displayDateFromAge(birth,(a0+a1)/2), houseIndex: ci, lon: base });
+    }
+  });
+
+  events.sort((a,b)=>a.date-b.date);
+
+  let startIdx=0;
+  for(let i=0;i<events.length;i++){
+    if(events[i].date <= fromDate) startIdx=i; else break;
+  }
+  const rows = events.slice(startIdx, startIdx+13);
+
+  return rows.slice(0,12).map((ev,i)=>({
+    start: ev.date,
+    end: rows[i+1] ? rows[i+1].date : null,
+    house: ev.houseIndex+1,
+    sign: signOfLon(ev.lon),
+    deg: formatDeg(ev.lon),
+  }));
+}
+
+function formatJpDate(d){
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+}
+
+function renderMoonTable(){
+  const p = getActive();
+  const area = el("moonTableArea");
+  if(!profileIsComplete(p)){
+    area.innerHTML = "<p class='note'>プロフィールを入力・保存してください。</p>";
+    return;
+  }
+  const natal = natalHoroscope(p);
+  const fromYear = parseInt(el("f_moonFromYear").value) || new Date().getFullYear();
+  area.innerHTML = "<p class='note'>計算中…</p>";
+  setTimeout(()=>{
+    const rows = computeProgressedMoonTable(p, natal, fromYear);
+    let html = `<table><tr><th>No</th><th>開始日</th><th>終了日</th><th>ハウス</th><th>サイン/度数</th></tr>`;
+    rows.forEach((r,i)=>{
+      html += `<tr><td>${i+1}</td>`+
+        `<td>${formatJpDate(r.start)}</td>`+
+        `<td>${r.end?formatJpDate(r.end):"-"}</td>`+
+        `<td>${r.house}ハウス</td>`+
+        `<td>${r.sign.glyph}\uFE0E ${r.sign.ja} ${r.deg}</td></tr>`;
+    });
+    html += "</table>";
+    area.innerHTML = html;
+  }, 10);
 }
 
 init();

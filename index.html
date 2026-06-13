@@ -102,6 +102,21 @@
     <div id="note" class="note"></div>
   </section>
 
+  <!-- ===== プログレス・ムーンカレンダー ===== -->
+  <section class="card">
+    <h2>プログレス・ムーンカレンダー</h2>
+    <p style="font-size:.8rem;color:var(--text-dim);margin-top:0">
+      セカンダリープログレッションの月が、ネイタルの各ハウス・サインにいつからいつまで滞在するかを一覧表示します。(ハウスシステムは上のプロフィール設定に従います)
+    </p>
+    <div class="row">
+      <label>表示開始年
+        <input type="number" id="f_moonFromYear" min="1900" max="2099">
+      </label>
+      <button id="moonCalcBtn" class="primary" style="flex:1;align-self:flex-end">計算する</button>
+    </div>
+    <div id="moonTableArea"></div>
+  </section>
+
   <!-- ===== 詳細データ ===== -->
   <section class="card">
     <h2>詳細データ</h2>
