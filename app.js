@@ -637,14 +637,17 @@ function renderAll(){
   if(currentMode==="progress"){
     el("wheel").innerHTML = "";
     legend.innerHTML = "";
+    el("detailSection").classList.add("hidden");
     note.textContent = "「表示開始年」を入力して「計算する」を押すと、その時点でプログレス・ムーンが滞在しているハウスから1サイクル(約27年)分のイングレス日が一覧表示されます。";
     if(p.timeUnknown){
       note.textContent += " 出生時刻が未入力のため、正午で仮算出しています。";
     }
     if(!el("f_moonFromYear").value) el("f_moonFromYear").value = new Date().getFullYear();
-    dataTables.innerHTML = "<p class='note'>「計算する」を押すと結果が表示されます。</p>";
+    el("progressResult").innerHTML = "<p class='note'>「計算する」を押すと結果が表示されます。</p>";
     return;
   }
+  el("detailSection").classList.remove("hidden");
+  el("progressResult").innerHTML = "";
 
   const ascDeg = norm360(natal.Ascendant.ChartPosition.Ecliptic.DecimalDegrees);
 
@@ -792,7 +795,7 @@ function formatJpDate(d){
 }
 
 function renderMoonTable(p, natal){
-  const area = el("dataTables");
+  const area = el("progressResult");
   const fromYear = parseInt(el("f_moonFromYear").value) || new Date().getFullYear();
   area.innerHTML = "<p class='note'>計算中…</p>";
   setTimeout(()=>{
