@@ -1,0 +1,236 @@
+:root{
+  --bg:#15131f;
+  --panel:#211f30;
+  --panel2:#2a2740;
+  --accent:#c9a4ff;
+  --accent2:#7fd9c4;
+  --text:#f1eefb;
+  --text-dim:#a59fc2;
+  --line:#3a3656;
+  --danger:#e0708a;
+}
+
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  background:linear-gradient(180deg,#15131f 0%, #1b1830 100%);
+  color:var(--text);
+  font-family:"Hiragino Sans","Noto Sans JP","Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+
+#app{
+  max-width:520px;
+  margin:0 auto;
+  padding:12px 12px 40px;
+}
+
+.topbar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 4px 16px;
+  position:sticky;
+  top:0;
+  background:linear-gradient(180deg,#15131f 70%, transparent);
+  z-index:10;
+}
+.topbar h1{
+  font-size:1.15rem;
+  margin:0;
+  flex:1;
+  letter-spacing:.05em;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+#profileSelect{
+  max-width:40%;
+}
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px 14px 16px;
+  margin-bottom:14px;
+  box-shadow:0 4px 18px rgba(0,0,0,.25);
+}
+.card h2{
+  font-size:.95rem;
+  margin:0 0 10px;
+  color:var(--accent);
+  letter-spacing:.08em;
+  font-weight:600;
+}
+
+label{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  font-size:.8rem;
+  color:var(--text-dim);
+  flex:1;
+}
+label.checkbox{
+  flex-direction:row;
+  align-items:center;
+  gap:8px;
+  color:var(--text);
+  font-size:.85rem;
+}
+
+input, select, button{
+  font-family:inherit;
+  font-size:.95rem;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--panel2);
+  color:var(--text);
+  padding:9px 10px;
+}
+input[type="checkbox"]{
+  width:18px;height:18px;flex:none;
+}
+.row{
+  display:flex;
+  gap:10px;
+  margin-bottom:10px;
+}
+.row.twocol > label{flex:1;}
+
+.row.buttons{
+  margin-top:6px;
+}
+
+button{
+  cursor:pointer;
+  transition:transform .05s ease, opacity .15s ease;
+}
+button:active{transform:scale(0.97);}
+button.primary{
+  background:linear-gradient(90deg,var(--accent),#9d7cf2);
+  color:#1a1530;
+  border:none;
+  font-weight:700;
+  flex:2;
+}
+button.danger{
+  background:transparent;
+  color:var(--danger);
+  border:1px solid var(--danger);
+  flex:1;
+}
+button.small{
+  font-size:.75rem;
+  padding:6px 10px;
+  white-space:nowrap;
+}
+.iconbtn{
+  width:36px;height:36px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;
+  padding:0;
+  background:var(--panel2);
+}
+
+.chart-tabs{
+  display:flex;
+  gap:6px;
+  margin-bottom:10px;
+  flex-wrap:wrap;
+}
+.chart-tabs .tab{
+  flex:1;
+  background:var(--panel2);
+  color:var(--text-dim);
+  border:1px solid var(--line);
+  font-size:.8rem;
+  padding:8px 4px;
+}
+.chart-tabs .tab.active{
+  background:linear-gradient(90deg,var(--accent),#9d7cf2);
+  color:#1a1530;
+  border-color:transparent;
+  font-weight:700;
+}
+
+#chartArea{
+  width:100%;
+  display:flex;
+  justify-content:center;
+}
+#wheel{
+  width:100%;
+  max-width:560px;
+  height:auto;
+}
+
+.hidden{display:none !important;}
+
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 10px;
+  justify-content:center;
+  font-size:.72rem;
+  color:var(--text-dim);
+  margin-top:8px;
+}
+.legend span.dot{
+  display:inline-block;
+  width:9px;height:9px;border-radius:50%;
+  margin-right:4px;
+  vertical-align:middle;
+}
+
+.note{
+  text-align:center;
+  font-size:.72rem;
+  color:var(--text-dim);
+  margin-top:8px;
+  line-height:1.6;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:.78rem;
+  margin-bottom:14px;
+}
+table caption{
+  text-align:left;
+  color:var(--accent2);
+  font-size:.82rem;
+  margin-bottom:4px;
+  font-weight:600;
+}
+th,td{
+  padding:5px 4px;
+  border-bottom:1px solid var(--line);
+  text-align:left;
+}
+th{color:var(--text-dim);font-weight:500;}
+tr.retro{color:var(--accent2);}
+
+footer{
+  text-align:center;
+  font-size:.7rem;
+  color:var(--text-dim);
+  padding-top:8px;
+}
+
+/* SVG element styles */
+.zodiac-ring{fill:none;}
+.zodiac-seg{stroke:var(--line);stroke-width:1;}
+.house-line{stroke:var(--text-dim);stroke-width:1;stroke-dasharray:2,2;}
+.house-line.angle{stroke:var(--accent);stroke-width:1.6;stroke-dasharray:none;}
+.zodiac-glyph{fill:var(--accent2);font-size:18px;text-anchor:middle;dominant-baseline:central;}
+.house-num{fill:var(--text-dim);font-size:11px;text-anchor:middle;dominant-baseline:central;}
+.planet-glyph{font-size:16px;text-anchor:middle;dominant-baseline:central;font-weight:bold;}
+.planet-line{stroke-width:1;opacity:.55;}
+.ring-circle{fill:none;stroke:var(--line);stroke-width:1;}
+.aspect-line{stroke-width:.8;opacity:.35;}

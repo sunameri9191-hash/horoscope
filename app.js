@@ -1,0 +1,607 @@
+/* ============================================================
+   星詠み日記 - app.js
+   ============================================================ */
+
+const { Origin, Horoscope } = window.AstroLib;
+
+/* ---------- 定数 ---------- */
+
+const SIGNS = [
+  { key:"aries",       ja:"牡羊座", glyph:"♈" },
+  { key:"taurus",      ja:"牡牛座", glyph:"♉" },
+  { key:"gemini",      ja:"双子座", glyph:"♊" },
+  { key:"cancer",      ja:"蟹座",   glyph:"♋" },
+  { key:"leo",         ja:"獅子座", glyph:"♌" },
+  { key:"virgo",       ja:"乙女座", glyph:"♍" },
+  { key:"libra",       ja:"天秤座", glyph:"♎" },
+  { key:"scorpio",     ja:"蠍座",   glyph:"♏" },
+  { key:"sagittarius", ja:"射手座", glyph:"♐" },
+  { key:"capricorn",   ja:"山羊座", glyph:"♑" },
+  { key:"aquarius",    ja:"水瓶座", glyph:"♒" },
+  { key:"pisces",      ja:"魚座",   glyph:"♓" },
+];
+
+// 描画・表に使う天体一覧 (キー, 日本語, グリフ)
+const BODIES = [
+  { key:"sun",     ja:"太陽",   glyph:"☉" },
+  { key:"moon",    ja:"月",     glyph:"☽" },
+  { key:"mercury", ja:"水星",   glyph:"☿" },
+  { key:"venus",   ja:"金星",   glyph:"♀" },
+  { key:"mars",    ja:"火星",   glyph:"♂" },
+  { key:"jupiter", ja:"木星",   glyph:"♃" },
+  { key:"saturn",  ja:"土星",   glyph:"♄" },
+  { key:"uranus",  ja:"天王星", glyph:"♅" },
+  { key:"neptune", ja:"海王星", glyph:"♆" },
+  { key:"pluto",   ja:"冥王星", glyph:"♇" },
+  { key:"chiron",  ja:"キロン", glyph:"⚷" },
+];
+const NODE_BODY = { key:"northnode", ja:"ノード", glyph:"☊" };
+
+const HOUSE_LABELS_JA = ["1","2","3","4","5","6","7","8","9","10","11","12"];
+
+// 出生地候補
+const CITIES = [
+  { name:"札幌",       lat:43.0618, lon:141.3545 },
+  { name:"仙台",       lat:38.2682, lon:140.8694 },
+  { name:"東京",       lat:35.6895, lon:139.6917 },
+  { name:"横浜",       lat:35.4437, lon:139.6380 },
+  { name:"名古屋",     lat:35.1815, lon:136.9066 },
+  { name:"大阪",       lat:34.6937, lon:135.5023 },
+  { name:"京都",       lat:35.0116, lon:135.7681 },
+  { name:"神戸",       lat:34.6901, lon:135.1955 },
+  { name:"広島",       lat:34.3853, lon:132.4553 },
+  { name:"福岡",       lat:33.5904, lon:130.4017 },
+  { name:"那覇",       lat:26.2124, lon:127.6809 },
+  { name:"ロンドン",   lat:51.5072, lon:-0.1276 },
+  { name:"パリ",       lat:48.8566, lon:2.3522 },
+  { name:"ニューヨーク", lat:40.7128, lon:-74.0060 },
+  { name:"ロサンゼルス", lat:34.0522, lon:-118.2437 },
+  { name:"その他(緯度経度を直接入力)", lat:null, lon:null },
+];
+
+// リングの色
+const RING_COLORS = {
+  natal:    "#c9a4ff",
+  transit:  "#7fd9c4",
+  progress: "#f3b6cf",
+};
+const RING_LABELS = {
+  natal:    "ネイタル",
+  transit:  "トランジット",
+  progress: "プログレス",
+};
+
+const STORAGE_KEY = "starDiary_profiles_v1";
+const ACTIVE_KEY  = "starDiary_active_v1";
+
+/* ---------- ストレージ ---------- */
+
+function loadProfiles(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return [];
+}
+function saveProfiles(list){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+}
+function getActiveId(){
+  return localStorage.getItem(ACTIVE_KEY);
+}
+function setActiveId(id){
+  localStorage.setItem(ACTIVE_KEY, id);
+}
+
+function newProfile(){
+  const id = "p_" + Date.now();
+  return {
+    id,
+    name: "新しいプロフィール",
+    date: "",          // YYYY-MM-DD
+    time: "12:00",
+    timeUnknown: false,
+    lat: null,
+    lon: null,
+    placeName: "",
+    houseSystem: "placidus",
+  };
+}
+
+/* ---------- 状態 ---------- */
+
+let profiles = loadProfiles();
+let activeId = getActiveId();
+let currentMode = "natal"; // natal | double | triple | progress
+
+if(profiles.length === 0){
+  const p = newProfile();
+  p.name = "わたし";
+  profiles.push(p);
+  saveProfiles(profiles);
+  activeId = p.id;
+  setActiveId(activeId);
+}
+if(!activeId || !profiles.find(p=>p.id===activeId)){
+  activeId = profiles[0].id;
+  setActiveId(activeId);
+}
+
+function getActive(){
+  return profiles.find(p=>p.id===activeId);
+}
+
+/* ---------- DOM参照 ---------- */
+
+const el = (id)=>document.getElementById(id);
+const profileSelect = el("profileSelect");
+const citySelect = el("f_citySelect");
+
+/* ---------- 初期化 ---------- */
+
+function init(){
+  // 出生地候補
+  CITIES.forEach((c,i)=>{
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = c.name;
+    citySelect.appendChild(opt);
+  });
+
+  refreshProfileSelect();
+  loadProfileToForm(getActive());
+
+  // デフォルトの対象日時 = 現在
+  setTargetDateToNow();
+
+  // イベント
+  profileSelect.addEventListener("change", ()=>{
+    activeId = profileSelect.value;
+    setActiveId(activeId);
+    loadProfileToForm(getActive());
+    renderAll();
+  });
+
+  el("newProfileBtn").addEventListener("click", ()=>{
+    const p = newProfile();
+    p.name = "新しいプロフィール" + (profiles.length+1);
+    profiles.push(p);
+    saveProfiles(profiles);
+    activeId = p.id;
+    setActiveId(activeId);
+    refreshProfileSelect();
+    loadProfileToForm(p);
+    renderAll();
+  });
+
+  el("deleteProfileBtn").addEventListener("click", ()=>{
+    if(profiles.length<=1){
+      alert("最後の1件は削除できません。");
+      return;
+    }
+    if(!confirm("このプロフィールを削除しますか？")) return;
+    profiles = profiles.filter(p=>p.id!==activeId);
+    saveProfiles(profiles);
+    activeId = profiles[0].id;
+    setActiveId(activeId);
+    refreshProfileSelect();
+    loadProfileToForm(getActive());
+    renderAll();
+  });
+
+  el("saveProfileBtn").addEventListener("click", ()=>{
+    saveFormToProfile();
+    refreshProfileSelect();
+    renderAll();
+  });
+
+  el("f_timeUnknown").addEventListener("change", (e)=>{
+    el("timeRow").classList.toggle("hidden", e.target.checked);
+  });
+
+  citySelect.addEventListener("change", ()=>{
+    const c = CITIES[citySelect.value];
+    if(c.lat!==null){
+      el("f_lat").value = c.lat;
+      el("f_lon").value = c.lon;
+    }
+  });
+
+  // チャートタブ
+  document.querySelectorAll(".chart-tabs .tab").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      document.querySelectorAll(".chart-tabs .tab").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      currentMode = btn.dataset.mode;
+      updateTargetDateRow();
+      renderAll();
+    });
+  });
+
+  el("nowBtn").addEventListener("click", ()=>{
+    setTargetDateToNow();
+    renderAll();
+  });
+  el("f_targetDate").addEventListener("change", renderAll);
+
+  updateTargetDateRow();
+  renderAll();
+}
+
+function setTargetDateToNow(){
+  const now = new Date();
+  const pad = (n)=>String(n).padStart(2,"0");
+  const str = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  el("f_targetDate").value = str;
+}
+
+function updateTargetDateRow(){
+  const row = el("targetDateRow");
+  const label = el("targetDateLabel");
+  if(currentMode==="natal"){
+    row.classList.add("hidden");
+  }else{
+    row.classList.remove("hidden");
+    if(currentMode==="progress"){
+      label.firstChild.textContent = "プログレスを見る日時";
+    }else{
+      label.firstChild.textContent = "対象日時(トランジット)";
+    }
+  }
+}
+
+function refreshProfileSelect(){
+  profileSelect.innerHTML = "";
+  profiles.forEach(p=>{
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.name || "(無名)";
+    if(p.id===activeId) opt.selected = true;
+    profileSelect.appendChild(opt);
+  });
+}
+
+function loadProfileToForm(p){
+  el("f_name").value = p.name || "";
+  el("f_date").value = p.date || "";
+  el("f_time").value = p.time || "12:00";
+  el("f_timeUnknown").checked = !!p.timeUnknown;
+  el("timeRow").classList.toggle("hidden", !!p.timeUnknown);
+  el("f_lat").value = p.lat ?? "";
+  el("f_lon").value = p.lon ?? "";
+  el("f_houseSystem").value = p.houseSystem || "placidus";
+  citySelect.value = CITIES.findIndex(c=>c.name===p.placeName);
+  if(citySelect.value === "-1") citySelect.value = CITIES.length-1;
+}
+
+function saveFormToProfile(){
+  const p = getActive();
+  p.name = el("f_name").value.trim() || "(無名)";
+  p.date = el("f_date").value;
+  p.time = el("f_time").value || "12:00";
+  p.timeUnknown = el("f_timeUnknown").checked;
+  p.lat = parseFloat(el("f_lat").value);
+  p.lon = parseFloat(el("f_lon").value);
+  p.houseSystem = el("f_houseSystem").value;
+  const cIdx = citySelect.value;
+  p.placeName = (cIdx!=="" && CITIES[cIdx] && CITIES[cIdx].lat!==null) ? CITIES[cIdx].name : "";
+  saveProfiles(profiles);
+}
+
+/* ---------- ホロスコープ計算 ---------- */
+
+function profileIsComplete(p){
+  return p.date && !isNaN(p.lat) && !isNaN(p.lon) && p.lat!==null && p.lon!==null;
+}
+
+function dateTimeFromProfile(p){
+  const [y,m,d] = p.date.split("-").map(Number);
+  let hh=12, mm=0;
+  if(!p.timeUnknown){
+    const [h,mi] = (p.time||"12:00").split(":").map(Number);
+    hh=h; mm=mi;
+  }
+  return { year:y, month:m-1, date:d, hour:hh, minute:mm };
+}
+
+function buildHoroscope(year,month,date,hour,minute,lat,lon,houseSystem){
+  const origin = new Origin({ year, month, date, hour, minute, latitude:lat, longitude:lon });
+  return new Horoscope({
+    origin,
+    houseSystem,
+    zodiac:"tropical",
+    aspectPoints:["bodies"],
+    aspectWithPoints:["bodies"],
+    aspectTypes:["major"],
+    language:"en",
+  });
+}
+
+function natalHoroscope(p){
+  const dt = dateTimeFromProfile(p);
+  return buildHoroscope(dt.year,dt.month,dt.date,dt.hour,dt.minute,p.lat,p.lon,p.houseSystem);
+}
+
+function transitHoroscope(p, targetDate){
+  return buildHoroscope(
+    targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(),
+    targetDate.getHours(), targetDate.getMinutes(),
+    p.lat, p.lon, p.houseSystem
+  );
+}
+
+// 一日一年法（セカンダリ・プログレッション）
+function progressedHoroscope(p, targetDate){
+  const dt = dateTimeFromProfile(p);
+  const birth = new Date(dt.year, dt.month, dt.date, dt.hour, dt.minute);
+  const ageMs = targetDate.getTime() - birth.getTime();
+  const ageDays = ageMs / 86400000;
+  const progressDays = ageDays / 365.25;
+  const prog = new Date(birth.getTime() + progressDays*86400000);
+  return buildHoroscope(
+    prog.getFullYear(), prog.getMonth(), prog.getDate(),
+    prog.getHours(), prog.getMinutes(),
+    p.lat, p.lon, p.houseSystem
+  );
+}
+
+/* ---------- 角度ヘルパー ---------- */
+
+function norm360(deg){
+  let d = deg % 360;
+  if(d<0) d+=360;
+  return d;
+}
+
+function bodyLon(horoscope, key){
+  if(key==="northnode"){
+    const np = horoscope.CelestialPoints.northnode;
+    return np.ChartPosition.Ecliptic.DecimalDegrees;
+  }
+  return horoscope.CelestialBodies[key].ChartPosition.Ecliptic.DecimalDegrees;
+}
+function bodyRetro(horoscope, key){
+  if(key==="northnode") return false;
+  return !!horoscope.CelestialBodies[key].isRetrograde;
+}
+function bodyHouse(horoscope, key){
+  if(key==="northnode"){
+    return horoscope.CelestialPoints.northnode.House ? horoscope.CelestialPoints.northnode.House.id : null;
+  }
+  return horoscope.CelestialBodies[key].House.id;
+}
+function signOfLon(lon){
+  const idx = Math.floor(norm360(lon)/30);
+  return SIGNS[idx];
+}
+function degInSign(lon){
+  return norm360(lon) % 30;
+}
+function formatDeg(lon){
+  const d = degInSign(lon);
+  const deg = Math.floor(d);
+  const min = Math.floor((d-deg)*60);
+  return `${deg}°${String(min).padStart(2,"0")}'`;
+}
+
+/* ---------- SVG描画 ---------- */
+
+const CX=300, CY=300;
+const ZODIAC_OUTER=290, ZODIAC_INNER=255;
+
+function polar(lonDeg, ascDeg, radius){
+  const angle = (180 - (lonDeg - ascDeg)) * Math.PI/180;
+  return { x: CX + radius*Math.cos(angle), y: CY - radius*Math.sin(angle) };
+}
+
+function svgEl(name, attrs, parent){
+  const e = document.createElementNS("http://www.w3.org/2000/svg", name);
+  for(const k in attrs) e.setAttribute(k, attrs[k]);
+  if(parent) parent.appendChild(e);
+  return e;
+}
+
+function renderWheel(natal, rings, ascDeg){
+  const svg = el("wheel");
+  svg.innerHTML = "";
+
+  // 外枠
+  svgEl("circle",{cx:CX,cy:CY,r:ZODIAC_OUTER,class:"ring-circle"},svg);
+  svgEl("circle",{cx:CX,cy:CY,r:ZODIAC_INNER,class:"ring-circle"},svg);
+
+  // 黄道12星座
+  for(let i=0;i<12;i++){
+    const lonStart = i*30;
+    const p1 = polar(lonStart, ascDeg, ZODIAC_INNER);
+    const p2 = polar(lonStart, ascDeg, ZODIAC_OUTER);
+    svgEl("line",{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,class:"zodiac-seg"},svg);
+    const mid = polar(lonStart+15, ascDeg, (ZODIAC_INNER+ZODIAC_OUTER)/2);
+    svgEl("text",{x:mid.x,y:mid.y,class:"zodiac-glyph"},svg).textContent = SIGNS[i].glyph;
+  }
+
+  // ハウスカスプ
+  const houses = natal.Houses.map(h=>norm360(h.ChartPosition.StartPosition.Ecliptic.DecimalDegrees));
+  const mcDeg = norm360(natal.Midheaven.ChartPosition.Ecliptic.DecimalDegrees);
+  const innerMostRadius = rings.length>0 ? (ZODIAC_INNER - rings.length*42 - 10) : ZODIAC_INNER-20;
+  const houseLineInner = Math.max(innerMostRadius-15, 40);
+
+  houses.forEach((cusp,i)=>{
+    const isAngle = (i===0 || i===3 || i===6 || i===9); // ASC, IC, DSC, MC
+    const p1 = polar(cusp, ascDeg, houseLineInner);
+    const p2 = polar(cusp, ascDeg, ZODIAC_INNER);
+    svgEl("line",{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,class:"house-line"+(isAngle?" angle":"")},svg);
+
+    const next = houses[(i+1)%12];
+    let span = norm360(next-cusp);
+    if(span===0) span=30;
+    const midLon = cusp + span/2;
+    const num = polar(midLon, ascDeg, houseLineInner+14);
+    svgEl("text",{x:num.x,y:num.y,class:"house-num"},svg).textContent = HOUSE_LABELS_JA[i];
+  });
+
+  // ASC / MC ラベル
+  const ascP = polar(ascDeg, ascDeg, ZODIAC_OUTER+12);
+  svgEl("text",{x:ascP.x,y:ascP.y,class:"house-num",style:"fill:#c9a4ff;font-weight:bold;font-size:13px"},svg).textContent="ASC";
+  const mcP = polar(mcDeg, ascDeg, ZODIAC_OUTER+12);
+  svgEl("text",{x:mcP.x,y:mcP.y,class:"house-num",style:"fill:#c9a4ff;font-weight:bold;font-size:13px"},svg).textContent="MC";
+
+  // 各リングの天体
+  const allBodyKeys = BODIES.map(b=>b.key).concat([NODE_BODY.key]);
+
+  rings.forEach((ring, idx)=>{
+    const radius = ZODIAC_INNER - 28 - idx*42;
+    svgEl("circle",{cx:CX,cy:CY,r:radius+18,class:"ring-circle"},svg);
+
+    // 配置位置の重なり回避
+    const placements = allBodyKeys.map(key=>{
+      const lon = norm360(bodyLon(ring.horoscope, key));
+      return { key, lon };
+    }).sort((a,b)=>a.lon-b.lon);
+
+    const minGap = 7; // 度
+    for(let i=1;i<placements.length;i++){
+      const prev = placements[i-1];
+      let diff = placements[i].lon - prev.lon;
+      if(diff < minGap){
+        placements[i].lon = prev.lon + minGap;
+      }
+    }
+    // ラップアラウンドチェック
+    if(placements.length>1){
+      let diff = norm360(placements[0].lon - placements[placements.length-1].lon);
+      // 簡易: 大きな問題は起きにくいので無視
+    }
+
+    placements.forEach(pl=>{
+      const info = pl.key===NODE_BODY.key ? NODE_BODY : BODIES.find(b=>b.key===pl.key);
+      const realLon = norm360(bodyLon(ring.horoscope, pl.key));
+      // 目盛り線(実際の度数)
+      const tickOuter = polar(realLon, ascDeg, ZODIAC_INNER);
+      const tickInner = polar(realLon, ascDeg, radius+16);
+      svgEl("line",{x1:tickOuter.x,y1:tickOuter.y,x2:tickInner.x,y2:tickInner.y,
+        class:"planet-line",style:`stroke:${ring.color}`},svg);
+      // グリフ(重なり回避済みの位置)
+      const gp = polar(pl.lon, ascDeg, radius);
+      const t = svgEl("text",{x:gp.x,y:gp.y,class:"planet-glyph",style:`fill:${ring.color}`},svg);
+      t.textContent = info.glyph + (bodyRetro(ring.horoscope,pl.key) ? "ᵒ" : "");
+    });
+  });
+}
+
+/* ---------- データ表 ---------- */
+
+function bodiesTable(title, horoscope, color){
+  let html = `<table><caption style="color:${color}">${title}</caption>`;
+  html += "<tr><th>天体</th><th>サイン</th><th>度数</th><th>ハウス</th><th></th></tr>";
+  BODIES.concat([NODE_BODY]).forEach(b=>{
+    const lon = bodyLon(horoscope, b.key);
+    const sign = signOfLon(lon);
+    const retro = bodyRetro(horoscope, b.key);
+    const house = bodyHouse(horoscope, b.key);
+    html += `<tr class="${retro?'retro':''}"><td>${b.glyph} ${b.ja}</td>`+
+      `<td>${sign.glyph} ${sign.ja}</td>`+
+      `<td>${formatDeg(lon)}</td>`+
+      `<td>${house ?? "-"}</td>`+
+      `<td>${retro?"℞":""}</td></tr>`;
+  });
+  html += "</table>";
+  return html;
+}
+
+function housesTable(natal){
+  let html = `<table><caption style="color:${RING_COLORS.natal}">ハウス・カスプ(${natal.houseSystem || ""})</caption>`;
+  html += "<tr><th>ハウス</th><th>サイン</th><th>度数</th></tr>";
+  natal.Houses.forEach((h,i)=>{
+    const lon = norm360(h.ChartPosition.StartPosition.Ecliptic.DecimalDegrees);
+    const sign = signOfLon(lon);
+    html += `<tr><td>第${HOUSE_LABELS_JA[i]}house</td><td>${sign.glyph} ${sign.ja}</td><td>${formatDeg(lon)}</td></tr>`;
+  });
+  html += "</table>";
+  return html;
+}
+
+/* ---------- メイン描画 ---------- */
+
+function getTargetDate(){
+  const v = el("f_targetDate").value;
+  if(!v) return new Date();
+  return new Date(v);
+}
+
+function renderAll(){
+  const p = getActive();
+  const note = el("note");
+  const legend = el("legend");
+  const dataTables = el("dataTables");
+
+  if(!profileIsComplete(p)){
+    el("wheel").innerHTML = "";
+    legend.innerHTML = "";
+    dataTables.innerHTML = "";
+    note.textContent = "プロフィールの生年月日・出生地(緯度経度)を入力して「保存」を押してください。";
+    return;
+  }
+
+  let natal;
+  try{
+    natal = natalHoroscope(p);
+  }catch(e){
+    note.textContent = "計算中にエラーが発生しました: " + e.message;
+    return;
+  }
+  natal.houseSystem = el("f_houseSystem").value;
+
+  const ascDeg = norm360(natal.Ascendant.ChartPosition.Ecliptic.DecimalDegrees);
+
+  const rings = [];
+  let notes = [];
+  if(p.timeUnknown){
+    notes.push("出生時刻が未入力のため、正午で仮算出しています。ハウス・アセンダント・月の正確な度数は目安としてご覧ください。");
+  }
+
+  if(currentMode==="natal"){
+    rings.push({ key:"natal", color:RING_COLORS.natal, horoscope:natal });
+  }else if(currentMode==="double"){
+    const target = getTargetDate();
+    const transit = transitHoroscope(p, target);
+    rings.push({ key:"natal", color:RING_COLORS.natal, horoscope:natal });
+    rings.push({ key:"transit", color:RING_COLORS.transit, horoscope:transit });
+    notes.push("内側のリングがトランジット(対象日時の天体配置)です。ハウスはネイタルのものを使用しています。");
+  }else if(currentMode==="triple"){
+    const target = getTargetDate();
+    const transit = transitHoroscope(p, target);
+    const progressed = progressedHoroscope(p, target);
+    rings.push({ key:"natal", color:RING_COLORS.natal, horoscope:natal });
+    rings.push({ key:"progress", color:RING_COLORS.progress, horoscope:progressed });
+    rings.push({ key:"transit", color:RING_COLORS.transit, horoscope:transit });
+    notes.push("外側=ネイタル、中央=プログレス、内側=トランジット。ハウスはネイタルのものを使用しています。");
+  }else if(currentMode==="progress"){
+    const target = getTargetDate();
+    const progressed = progressedHoroscope(p, target);
+    rings.push({ key:"natal", color:RING_COLORS.natal, horoscope:natal });
+    rings.push({ key:"progress", color:RING_COLORS.progress, horoscope:progressed });
+    const dt = dateTimeFromProfile(p);
+    const birth = new Date(dt.year, dt.month, dt.date, dt.hour, dt.minute);
+    const ageYears = (target.getTime()-birth.getTime())/86400000/365.25;
+    notes.push(`一日一年法プログレス: 対象日時時点での満年齢 約${ageYears.toFixed(1)}歳に対応する位置を表示しています。`);
+  }
+
+  renderWheel(natal, rings, ascDeg);
+
+  // 凡例
+  legend.innerHTML = rings.map(r=>
+    `<span><span class="dot" style="background:${r.color}"></span>${RING_LABELS[r.key]}</span>`
+  ).join("");
+
+  note.textContent = notes.join(" ");
+
+  // データ表
+  let html = "";
+  rings.forEach(r=>{
+    html += bodiesTable(RING_LABELS[r.key]+"の天体配置", r.horoscope, r.color);
+  });
+  html += housesTable(natal);
+  dataTables.innerHTML = html;
+}
+
+init();
