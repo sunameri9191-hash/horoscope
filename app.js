@@ -412,7 +412,7 @@ const CX=300, CY=300;
 const ZODIAC_OUTER=290, ZODIAC_INNER=255;
 
 function polar(lonDeg, ascDeg, radius){
-  const angle = (180 - (lonDeg - ascDeg)) * Math.PI/180;
+  const angle = (180 + (lonDeg - ascDeg)) * Math.PI/180;
   return { x: CX + radius*Math.cos(angle), y: CY - radius*Math.sin(angle) };
 }
 
@@ -438,7 +438,7 @@ function renderWheel(natal, rings, ascDeg){
     const p2 = polar(lonStart, ascDeg, ZODIAC_OUTER);
     svgEl("line",{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,class:"zodiac-seg"},svg);
     const mid = polar(lonStart+15, ascDeg, (ZODIAC_INNER+ZODIAC_OUTER)/2);
-    svgEl("text",{x:mid.x,y:mid.y,class:"zodiac-glyph",style:`fill:${SIGNS[i].color}`},svg).textContent = SIGNS[i].glyph;
+    svgEl("text",{x:mid.x,y:mid.y,class:"zodiac-glyph",style:`fill:${SIGNS[i].color}`},svg).textContent = SIGNS[i].glyph + "\uFE0E";
   }
 
   // ハウスカスプ
@@ -521,7 +521,7 @@ function renderWheel(natal, rings, ascDeg){
       // グリフ(重なり回避済みの位置)
       const gp = polar(pl.lon, ascDeg, radius);
       const t = svgEl("text",{x:gp.x,y:gp.y,class:"planet-glyph",style:`fill:${ring.color}`},svg);
-      t.textContent = info.glyph + (bodyRetro(ring.horoscope,pl.key) ? "ᵒ" : "");
+      t.textContent = info.glyph + "\uFE0E" + (bodyRetro(ring.horoscope,pl.key) ? "ᵒ" : "");
     });
   });
 }
@@ -536,8 +536,8 @@ function bodiesTable(title, horoscope, color){
     const sign = signOfLon(lon);
     const retro = bodyRetro(horoscope, b.key);
     const house = bodyHouse(horoscope, b.key);
-    html += `<tr class="${retro?'retro':''}"><td>${b.glyph} ${b.ja}</td>`+
-      `<td>${sign.glyph} ${sign.ja}</td>`+
+    html += `<tr class="${retro?'retro':''}"><td>${b.glyph}\uFE0E ${b.ja}</td>`+
+      `<td>${sign.glyph}\uFE0E ${sign.ja}</td>`+
       `<td>${formatDeg(lon)}</td>`+
       `<td>${house ?? "-"}</td>`+
       `<td>${retro?"℞":""}</td></tr>`;
@@ -552,7 +552,7 @@ function housesTable(natal){
   natal.Houses.forEach((h,i)=>{
     const lon = norm360(h.ChartPosition.StartPosition.Ecliptic.DecimalDegrees);
     const sign = signOfLon(lon);
-    html += `<tr><td>第${HOUSE_LABELS_JA[i]}house</td><td>${sign.glyph} ${sign.ja}</td><td>${formatDeg(lon)}</td></tr>`;
+    html += `<tr><td>第${HOUSE_LABELS_JA[i]}house</td><td>${sign.glyph}\uFE0E ${sign.ja}</td><td>${formatDeg(lon)}</td></tr>`;
   });
   html += "</table>";
   return html;
@@ -560,10 +560,10 @@ function housesTable(natal){
 
 function aspectGridTable(title, rowHoro, colHoro, color, skipSamePair){
   let html = `<table><caption style="color:${color}">${title}</caption><tr><th></th>`;
-  BODIES.forEach(b=> html += `<th title="${b.ja}">${b.glyph}</th>`);
+  BODIES.forEach(b=> html += `<th title="${b.ja}">${b.glyph}\uFE0E</th>`);
   html += "</tr>";
   BODIES.forEach((rb,ri)=>{
-    html += `<tr><th>${rb.glyph} ${rb.ja}</th>`;
+    html += `<tr><th>${rb.glyph}\uFE0E ${rb.ja}</th>`;
     BODIES.forEach((cb,ci)=>{
       if(skipSamePair && ri===ci){
         html += "<td>-</td>";
@@ -573,7 +573,7 @@ function aspectGridTable(title, rowHoro, colHoro, color, skipSamePair){
       const lon2 = bodyLon(colHoro, cb.key);
       const asp = findAspect(lon1, lon2);
       if(asp){
-        html += `<td style="color:${asp.color};font-weight:bold;text-align:center" title="${asp.name}">${asp.glyph}</td>`;
+        html += `<td style="color:${asp.color};font-weight:bold;text-align:center" title="${asp.name}">${asp.glyph}\uFE0E</td>`;
       }else{
         html += `<td style="text-align:center;color:var(--text-dim)">・</td>`;
       }
