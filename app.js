@@ -83,9 +83,9 @@ const CITIES = [
 
 // リングの色
 const RING_COLORS = {
-  natal:    "#c9a4ff",
-  transit:  "#7fd9c4",
-  progress: "#f3b6cf",
+  natal:    "#1d3461",
+  transit:  "#1f9488",
+  progress: "#b89cf0",
 };
 const RING_LABELS = {
   natal:    "ネイタル",
@@ -449,9 +449,9 @@ function renderWheel(natal, rings, ascDeg){
 
   houses.forEach((cusp,i)=>{
     const isAngle = (i===0 || i===3 || i===6 || i===9); // ASC, IC, DSC, MC
-    const p1 = polar(cusp, ascDeg, houseLineInner);
+    const center = {x:CX,y:CY};
     const p2 = polar(cusp, ascDeg, ZODIAC_INNER);
-    svgEl("line",{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,class:"house-line"+(isAngle?" angle":"")},svg);
+    svgEl("line",{x1:center.x,y1:center.y,x2:p2.x,y2:p2.y,class:"house-line"+(isAngle?" angle":"")},svg);
 
     const next = houses[(i+1)%12];
     let span = norm360(next-cusp);
@@ -552,7 +552,7 @@ function housesTable(natal){
   natal.Houses.forEach((h,i)=>{
     const lon = norm360(h.ChartPosition.StartPosition.Ecliptic.DecimalDegrees);
     const sign = signOfLon(lon);
-    html += `<tr><td>第${HOUSE_LABELS_JA[i]}house</td><td>${sign.glyph}\uFE0E ${sign.ja}</td><td>${formatDeg(lon)}</td></tr>`;
+    html += `<tr><td>${HOUSE_LABELS_JA[i]}ハウス</td><td>${sign.glyph}\uFE0E ${sign.ja}</td><td>${formatDeg(lon)}</td></tr>`;
   });
   html += "</table>";
   return html;
@@ -575,7 +575,7 @@ function aspectGridTable(title, rowHoro, colHoro, color, skipSamePair){
       if(asp){
         html += `<td style="color:${asp.color};font-weight:bold;text-align:center" title="${asp.name}">${asp.glyph}\uFE0E</td>`;
       }else{
-        html += `<td style="text-align:center;color:var(--text-dim)">・</td>`;
+        html += `<td></td>`;
       }
     });
     html += "</tr>";
