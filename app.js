@@ -84,7 +84,7 @@ const CITIES = [
 // リングの色
 const RING_COLORS = {
   natal:    "#1d3461",
-  transit:  "#1f9488",
+  transit:  "#3ec9b8",
   progress: "#b89cf0",
 };
 const RING_LABELS = {
@@ -628,22 +628,22 @@ function renderAll(){
   }else if(currentMode==="double"){
     const target = getTargetDate();
     const transit = transitHoroscope(p, target);
-    rings.push({ key:"natal", color:RING_COLORS.natal, horoscope:natal });
     rings.push({ key:"transit", color:RING_COLORS.transit, horoscope:transit });
-    notes.push("内側のリングがトランジット(対象日時の天体配置)です。ハウスはネイタルのものを使用しています。");
+    rings.push({ key:"natal", color:RING_COLORS.natal, horoscope:natal });
+    notes.push("外側のリングがトランジット(対象日時の天体配置)です。ハウスはネイタルのものを使用しています。");
   }else if(currentMode==="triple"){
     const target = getTargetDate();
     const transit = transitHoroscope(p, target);
     const progressed = progressedHoroscope(p, target);
-    rings.push({ key:"natal", color:RING_COLORS.natal, horoscope:natal });
-    rings.push({ key:"progress", color:RING_COLORS.progress, horoscope:progressed });
     rings.push({ key:"transit", color:RING_COLORS.transit, horoscope:transit });
-    notes.push("外側=ネイタル、中央=プログレス、内側=トランジット。ハウスはネイタルのものを使用しています。");
+    rings.push({ key:"progress", color:RING_COLORS.progress, horoscope:progressed });
+    rings.push({ key:"natal", color:RING_COLORS.natal, horoscope:natal });
+    notes.push("外側=トランジット、中央=プログレス、内側=ネイタル。ハウスはネイタルのものを使用しています。");
   }else if(currentMode==="progress"){
     const target = getTargetDate();
     const progressed = progressedHoroscope(p, target);
-    rings.push({ key:"natal", color:RING_COLORS.natal, horoscope:natal });
     rings.push({ key:"progress", color:RING_COLORS.progress, horoscope:progressed });
+    rings.push({ key:"natal", color:RING_COLORS.natal, horoscope:natal });
     const dt = dateTimeFromProfile(p);
     const birth = new Date(dt.year, dt.month, dt.date, dt.hour, dt.minute);
     const ageYears = (target.getTime()-birth.getTime())/86400000/365.25;
