@@ -84,7 +84,7 @@
       <button class="tab active" data-mode="natal">ネイタル</button>
       <button class="tab" data-mode="double">二重円</button>
       <button class="tab" data-mode="triple">三重円</button>
-      <button class="tab" data-mode="progress">プログレス</button>
+      <button class="tab" data-mode="progress">一日一年法</button>
     </div>
 
     <div id="targetDateRow" class="row hidden">
@@ -94,27 +94,19 @@
       <button id="nowBtn" class="small">現在時刻にする</button>
     </div>
 
+    <div id="progressControls" class="row hidden">
+      <label>表示開始年
+        <input type="number" id="f_moonFromYear" min="1900" max="2099">
+      </label>
+      <button id="moonCalcBtn" class="primary" style="flex:1;align-self:flex-end">計算する</button>
+    </div>
+
     <div id="chartArea">
       <svg id="wheel" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
 
     <div id="legend" class="legend"></div>
     <div id="note" class="note"></div>
-  </section>
-
-  <!-- ===== プログレス・ムーンカレンダー ===== -->
-  <section class="card">
-    <h2>プログレス・ムーンカレンダー</h2>
-    <p style="font-size:.8rem;color:var(--text-dim);margin-top:0">
-      セカンダリープログレッションの月が、ネイタルの各ハウス・サインにいつからいつまで滞在するかを一覧表示します。(ハウスシステムは上のプロフィール設定に従います)
-    </p>
-    <div class="row">
-      <label>表示開始年
-        <input type="number" id="f_moonFromYear" min="1900" max="2099">
-      </label>
-      <button id="moonCalcBtn" class="primary" style="flex:1;align-self:flex-end">計算する</button>
-    </div>
-    <div id="moonTableArea"></div>
   </section>
 
   <!-- ===== 詳細データ ===== -->

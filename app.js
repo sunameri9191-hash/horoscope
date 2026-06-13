@@ -246,7 +246,12 @@ function init(){
   });
   el("f_targetDate").addEventListener("change", renderAll);
 
-  el("moonCalcBtn").addEventListener("click", renderMoonTable);
+  el("moonCalcBtn").addEventListener("click", ()=>{
+    const p = getActive();
+    if(!profileIsComplete(p)) return;
+    const natal = natalHoroscope(p);
+    renderMoonTable(p, natal);
+  });
   el("f_moonFromYear").value = new Date().getFullYear();
 
   updateTargetDateRow();
@@ -263,15 +268,26 @@ function setTargetDateToNow(){
 function updateTargetDateRow(){
   const row = el("targetDateRow");
   const label = el("targetDateLabel");
+  const progressControls = el("progressControls");
+  const chartArea = el("chartArea");
+  const legend = el("legend");
+
   if(currentMode==="natal"){
     row.classList.add("hidden");
+    progressControls.classList.add("hidden");
+    chartArea.classList.remove("hidden");
+    legend.classList.remove("hidden");
+  }else if(currentMode==="progress"){
+    row.classList.add("hidden");
+    progressControls.classList.remove("hidden");
+    chartArea.classList.add("hidden");
+    legend.classList.add("hidden");
   }else{
     row.classList.remove("hidden");
-    if(currentMode==="progress"){
-      label.firstChild.textContent = "プログレスを見る日時";
-    }else{
-      label.firstChild.textContent = "対象日時(トランジット)";
-    }
+    label.firstChild.textContent = "対象日時(トランジット)";
+    progressControls.classList.add("hidden");
+    chartArea.classList.remove("hidden");
+    legend.classList.remove("hidden");
   }
 }
 
@@ -618,6 +634,18 @@ function renderAll(){
   }
   natal.houseSystem = el("f_houseSystem").value;
 
+  if(currentMode==="progress"){
+    el("wheel").innerHTML = "";
+    legend.innerHTML = "";
+    note.textContent = "「表示開始年」を入力して「計算する」を押すと、その時点でプログレス・ムーンが滞在しているハウスから1サイクル(約27年)分のイングレス日が一覧表示されます。";
+    if(p.timeUnknown){
+      note.textContent += " 出生時刻が未入力のため、正午で仮算出しています。";
+    }
+    if(!el("f_moonFromYear").value) el("f_moonFromYear").value = new Date().getFullYear();
+    dataTables.innerHTML = "<p class='note'>「計算する」を押すと結果が表示されます。</p>";
+    return;
+  }
+
   const ascDeg = norm360(natal.Ascendant.ChartPosition.Ecliptic.DecimalDegrees);
 
   const rings = [];
@@ -642,15 +670,6 @@ function renderAll(){
     rings.push({ key:"progress", color:RING_COLORS.progress, horoscope:progressed });
     rings.push({ key:"natal", color:RING_COLORS.natal, horoscope:natal });
     notes.push("外側=トランジット、中央=プログレス、内側=ネイタル。ハウスはネイタルのものを使用しています。");
-  }else if(currentMode==="progress"){
-    const target = getTargetDate();
-    const progressed = progressedHoroscope(p, target);
-    rings.push({ key:"progress", color:RING_COLORS.progress, horoscope:progressed });
-    rings.push({ key:"natal", color:RING_COLORS.natal, horoscope:natal });
-    const dt = dateTimeFromProfile(p);
-    const birth = new Date(dt.year, dt.month, dt.date, dt.hour, dt.minute);
-    const ageYears = (target.getTime()-birth.getTime())/86400000/365.25;
-    notes.push(`一日一年法プログレス: 対象日時時点での満年齢 約${ageYears.toFixed(1)}歳に対応する位置を表示しています。`);
   }
 
   renderWheel(natal, rings, ascDeg);
@@ -669,7 +688,7 @@ function renderAll(){
   });
   html += housesTable(natal);
 
-  if(currentMode==="natal" || currentMode==="progress"){
+  if(currentMode==="natal"){
     html += aspectGridTable("アスペクト表(ネイタル × ネイタル)", natal, natal, RING_COLORS.natal, true);
   }else{
     const transitRing = rings.find(r=>r.key==="transit");
@@ -772,25 +791,20 @@ function formatJpDate(d){
   return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
 }
 
-function renderMoonTable(){
-  const p = getActive();
-  const area = el("moonTableArea");
-  if(!profileIsComplete(p)){
-    area.innerHTML = "<p class='note'>プロフィールを入力・保存してください。</p>";
-    return;
-  }
-  const natal = natalHoroscope(p);
+function renderMoonTable(p, natal){
+  const area = el("dataTables");
   const fromYear = parseInt(el("f_moonFromYear").value) || new Date().getFullYear();
   area.innerHTML = "<p class='note'>計算中…</p>";
   setTimeout(()=>{
     const rows = computeProgressedMoonTable(p, natal, fromYear);
-    let html = `<table><tr><th>No</th><th>開始日</th><th>終了日</th><th>ハウス</th><th>サイン/度数</th></tr>`;
+    let html = `<table><caption style="color:${RING_COLORS.progress}">The Progressed Moon Calendar</caption>`+
+      `<tr><th>No</th><th>サイン/度数</th><th>開始日</th><th>ハウス</th><th>終了日</th></tr>`;
     rows.forEach((r,i)=>{
       html += `<tr><td>${i+1}</td>`+
+        `<td>${r.sign.glyph}\uFE0E ${r.sign.ja} ${r.deg}</td>`+
         `<td>${formatJpDate(r.start)}</td>`+
-        `<td>${r.end?formatJpDate(r.end):"-"}</td>`+
         `<td>${r.house}ハウス</td>`+
-        `<td>${r.sign.glyph}\uFE0E ${r.sign.ja} ${r.deg}</td></tr>`;
+        `<td>${r.end?formatJpDate(r.end):"-"}</td></tr>`;
     });
     html += "</table>";
     area.innerHTML = html;
