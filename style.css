@@ -1,20 +1,20 @@
 :root{
-  --bg:#15131f;
-  --panel:#211f30;
-  --panel2:#2a2740;
-  --accent:#c9a4ff;
-  --accent2:#7fd9c4;
-  --text:#f1eefb;
-  --text-dim:#a59fc2;
-  --line:#3a3656;
-  --danger:#e0708a;
+  --bg:#fdf8ee;
+  --panel:#ffffff;
+  --panel2:#f6efe1;
+  --accent:#9b6fd9;
+  --accent2:#1f9488;
+  --text:#3c352c;
+  --text-dim:#9b9186;
+  --line:#ece3d2;
+  --danger:#d1486a;
 }
 
 *{box-sizing:border-box;}
 
 body{
   margin:0;
-  background:linear-gradient(180deg,#15131f 0%, #1b1830 100%);
+  background:linear-gradient(180deg,#fffdf8 0%, #fdf8ee 100%);
   color:var(--text);
   font-family:"Hiragino Sans","Noto Sans JP","Helvetica Neue",Arial,sans-serif;
   -webkit-font-smoothing:antialiased;

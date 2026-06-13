@@ -7,19 +7,41 @@ const { Origin, Horoscope } = window.AstroLib;
 /* ---------- 定数 ---------- */
 
 const SIGNS = [
-  { key:"aries",       ja:"牡羊座", glyph:"♈" },
-  { key:"taurus",      ja:"牡牛座", glyph:"♉" },
-  { key:"gemini",      ja:"双子座", glyph:"♊" },
-  { key:"cancer",      ja:"蟹座",   glyph:"♋" },
-  { key:"leo",         ja:"獅子座", glyph:"♌" },
-  { key:"virgo",       ja:"乙女座", glyph:"♍" },
-  { key:"libra",       ja:"天秤座", glyph:"♎" },
-  { key:"scorpio",     ja:"蠍座",   glyph:"♏" },
-  { key:"sagittarius", ja:"射手座", glyph:"♐" },
-  { key:"capricorn",   ja:"山羊座", glyph:"♑" },
-  { key:"aquarius",    ja:"水瓶座", glyph:"♒" },
-  { key:"pisces",      ja:"魚座",   glyph:"♓" },
+  { key:"aries",       ja:"牡羊座", glyph:"♈", color:"#e2585f" },
+  { key:"taurus",      ja:"牡牛座", glyph:"♉", color:"#f0a04b" },
+  { key:"gemini",      ja:"双子座", glyph:"♊", color:"#4caf82" },
+  { key:"cancer",      ja:"蟹座",   glyph:"♋", color:"#4a90d9" },
+  { key:"leo",         ja:"獅子座", glyph:"♌", color:"#e2585f" },
+  { key:"virgo",       ja:"乙女座", glyph:"♍", color:"#f0a04b" },
+  { key:"libra",       ja:"天秤座", glyph:"♎", color:"#4caf82" },
+  { key:"scorpio",     ja:"蠍座",   glyph:"♏", color:"#4a90d9" },
+  { key:"sagittarius", ja:"射手座", glyph:"♐", color:"#e2585f" },
+  { key:"capricorn",   ja:"山羊座", glyph:"♑", color:"#f0a04b" },
+  { key:"aquarius",    ja:"水瓶座", glyph:"♒", color:"#4caf82" },
+  { key:"pisces",      ja:"魚座",   glyph:"♓", color:"#4a90d9" },
 ];
+
+// メジャーアスペクトの定義 (角度, 許容オーブ, グリフ, 色)
+const ASPECTS = [
+  { name:"conjunction", angle:0,   orb:8, glyph:"☌", color:"#9b9186" },
+  { name:"sextile",     angle:60,  orb:6, glyph:"⚹", color:"#4a90d9" },
+  { name:"square",      angle:90,  orb:7, glyph:"□", color:"#d1486a" },
+  { name:"trine",       angle:120, orb:8, glyph:"△", color:"#4a90d9" },
+  { name:"opposition",  angle:180, orb:8, glyph:"☍", color:"#d1486a" },
+];
+
+function findAspect(lon1, lon2){
+  let diff = Math.abs(norm360(lon1) - norm360(lon2));
+  if(diff>180) diff = 360-diff;
+  let best=null;
+  ASPECTS.forEach(a=>{
+    const delta = Math.abs(diff - a.angle);
+    if(delta<=a.orb){
+      if(!best || delta<best.delta) best={...a, delta};
+    }
+  });
+  return best;
+}
 
 // 描画・表に使う天体一覧 (キー, 日本語, グリフ)
 const BODIES = [
@@ -416,7 +438,7 @@ function renderWheel(natal, rings, ascDeg){
     const p2 = polar(lonStart, ascDeg, ZODIAC_OUTER);
     svgEl("line",{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,class:"zodiac-seg"},svg);
     const mid = polar(lonStart+15, ascDeg, (ZODIAC_INNER+ZODIAC_OUTER)/2);
-    svgEl("text",{x:mid.x,y:mid.y,class:"zodiac-glyph"},svg).textContent = SIGNS[i].glyph;
+    svgEl("text",{x:mid.x,y:mid.y,class:"zodiac-glyph",style:`fill:${SIGNS[i].color}`},svg).textContent = SIGNS[i].glyph;
   }
 
   // ハウスカスプ
@@ -444,6 +466,22 @@ function renderWheel(natal, rings, ascDeg){
   svgEl("text",{x:ascP.x,y:ascP.y,class:"house-num",style:"fill:#c9a4ff;font-weight:bold;font-size:13px"},svg).textContent="ASC";
   const mcP = polar(mcDeg, ascDeg, ZODIAC_OUTER+12);
   svgEl("text",{x:mcP.x,y:mcP.y,class:"house-num",style:"fill:#c9a4ff;font-weight:bold;font-size:13px"},svg).textContent="MC";
+
+  // ネイタルの主要アスペクト線(中心部)
+  const aspectRadius = Math.max(innerMostRadius - 8, 30);
+  svgEl("circle",{cx:CX,cy:CY,r:aspectRadius,class:"ring-circle"},svg);
+  const aspectKeys = BODIES.map(b=>b.key);
+  for(let i=0;i<aspectKeys.length;i++){
+    for(let j=i+1;j<aspectKeys.length;j++){
+      const lon1 = bodyLon(natal, aspectKeys[i]);
+      const lon2 = bodyLon(natal, aspectKeys[j]);
+      const asp = findAspect(lon1, lon2);
+      if(!asp || asp.name==="conjunction") continue;
+      const p1 = polar(lon1, ascDeg, aspectRadius);
+      const p2 = polar(lon2, ascDeg, aspectRadius);
+      svgEl("line",{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,class:"aspect-line",stroke:asp.color},svg);
+    }
+  }
 
   // 各リングの天体
   const allBodyKeys = BODIES.map(b=>b.key).concat([NODE_BODY.key]);
@@ -515,6 +553,32 @@ function housesTable(natal){
     const lon = norm360(h.ChartPosition.StartPosition.Ecliptic.DecimalDegrees);
     const sign = signOfLon(lon);
     html += `<tr><td>第${HOUSE_LABELS_JA[i]}house</td><td>${sign.glyph} ${sign.ja}</td><td>${formatDeg(lon)}</td></tr>`;
+  });
+  html += "</table>";
+  return html;
+}
+
+function aspectGridTable(title, rowHoro, colHoro, color, skipSamePair){
+  let html = `<table><caption style="color:${color}">${title}</caption><tr><th></th>`;
+  BODIES.forEach(b=> html += `<th title="${b.ja}">${b.glyph}</th>`);
+  html += "</tr>";
+  BODIES.forEach((rb,ri)=>{
+    html += `<tr><th>${rb.glyph} ${rb.ja}</th>`;
+    BODIES.forEach((cb,ci)=>{
+      if(skipSamePair && ri===ci){
+        html += "<td>-</td>";
+        return;
+      }
+      const lon1 = bodyLon(rowHoro, rb.key);
+      const lon2 = bodyLon(colHoro, cb.key);
+      const asp = findAspect(lon1, lon2);
+      if(asp){
+        html += `<td style="color:${asp.color};font-weight:bold;text-align:center" title="${asp.name}">${asp.glyph}</td>`;
+      }else{
+        html += `<td style="text-align:center;color:var(--text-dim)">・</td>`;
+      }
+    });
+    html += "</tr>";
   });
   html += "</table>";
   return html;
@@ -601,6 +665,16 @@ function renderAll(){
     html += bodiesTable(RING_LABELS[r.key]+"の天体配置", r.horoscope, r.color);
   });
   html += housesTable(natal);
+
+  if(currentMode==="natal" || currentMode==="progress"){
+    html += aspectGridTable("アスペクト表(ネイタル × ネイタル)", natal, natal, RING_COLORS.natal, true);
+  }else{
+    const transitRing = rings.find(r=>r.key==="transit");
+    if(transitRing){
+      html += aspectGridTable("アスペクト表(横:ネイタル × 縦:トランジット)", transitRing.horoscope, natal, RING_COLORS.transit, false);
+    }
+  }
+
   dataTables.innerHTML = html;
 }
 
