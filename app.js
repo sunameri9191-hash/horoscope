@@ -235,6 +235,7 @@ function init(){
       document.querySelectorAll(".chart-tabs .tab").forEach(b=>b.classList.remove("active"));
       btn.classList.add("active");
       currentMode = btn.dataset.mode;
+      el("chartTitle").textContent = (currentMode==="progress") ? "セカンダリープログレッション" : "ホロスコープ";
       updateTargetDateRow();
       renderAll();
     });
@@ -791,7 +792,7 @@ function computeProgressedMoonTable(p, natal, fromYear){
 }
 
 function formatJpDate(d){
-  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+  return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
 }
 
 function renderMoonTable(p, natal){
@@ -800,14 +801,14 @@ function renderMoonTable(p, natal){
   area.innerHTML = "<p class='note'>計算中…</p>";
   setTimeout(()=>{
     const rows = computeProgressedMoonTable(p, natal, fromYear);
+    const CIRCLED = ["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫"];
     let html = `<table><caption style="color:${RING_COLORS.progress}">The Progressed Moon Calendar</caption>`+
-      `<tr><th>No</th><th>サイン/度数</th><th>開始日</th><th>ハウス</th><th>終了日</th></tr>`;
+      `<tr><th>No</th><th>サイン/度数</th><th>開始日</th><th>ハウス</th></tr>`;
     rows.forEach((r,i)=>{
       html += `<tr><td>${i+1}</td>`+
-        `<td>${r.sign.glyph}\uFE0E ${r.sign.ja} ${r.deg}</td>`+
+        `<td style="color:${r.sign.color}">${r.sign.glyph}\uFE0E ${r.sign.ja} ${r.deg}</td>`+
         `<td>${formatJpDate(r.start)}</td>`+
-        `<td>${r.house}ハウス</td>`+
-        `<td>${r.end?formatJpDate(r.end):"-"}</td></tr>`;
+        `<td style="text-align:center;font-size:1.1em">${CIRCLED[r.house-1]}</td></tr>`;
     });
     html += "</table>";
     area.innerHTML = html;
