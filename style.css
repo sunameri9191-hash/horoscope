@@ -111,8 +111,8 @@ button{
 }
 button:active{transform:scale(0.97);}
 button.primary{
-  background:linear-gradient(90deg,var(--accent),#9d7cf2);
-  color:#1a1530;
+  background:linear-gradient(90deg,#cdb8f2,#dccdf7);
+  color:#4a3a78;
   border:none;
   font-weight:700;
   flex:2;
@@ -152,8 +152,8 @@ button.small{
   padding:8px 4px;
 }
 .chart-tabs .tab.active{
-  background:linear-gradient(90deg,var(--accent),#9d7cf2);
-  color:#1a1530;
+  background:linear-gradient(90deg,#cdb8f2,#dccdf7);
+  color:#4a3a78;
   border-color:transparent;
   font-weight:700;
 }

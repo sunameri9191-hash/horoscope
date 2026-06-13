@@ -694,10 +694,15 @@ function renderAll(){
 
   if(currentMode==="natal"){
     html += aspectGridTable("アスペクト表(ネイタル × ネイタル)", natal, natal, RING_COLORS.natal, true);
-  }else{
+  }else if(currentMode==="double"){
     const transitRing = rings.find(r=>r.key==="transit");
     if(transitRing){
-      html += aspectGridTable("アスペクト表(横:ネイタル × 縦:トランジット)", transitRing.horoscope, natal, RING_COLORS.transit, false);
+      html += aspectGridTable("アスペクト表(縦:ネイタル × 横:トランジット)", natal, transitRing.horoscope, transitRing.color, false);
+    }
+  }else if(currentMode==="triple"){
+    const progressRing = rings.find(r=>r.key==="progress");
+    if(progressRing){
+      html += aspectGridTable("アスペクト表(縦:ネイタル × 横:プログレス)", natal, progressRing.horoscope, progressRing.color, false);
     }
   }
 
