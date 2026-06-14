@@ -852,7 +852,16 @@ function daysInMonth(year, month){
 }
 
 function ephemDayLon(year, month, date, key){
-  const origin = new Origin({ year, month, date, hour:0, minute:0, latitude:35.6895, longitude:139.6917 });
+  // 日本時間0時 = UTC前日15時
+  const jstMidnight = new Date(Date.UTC(year, month, date, -9, 0, 0));
+  const origin = new Origin({
+    year: jstMidnight.getUTCFullYear(),
+    month: jstMidnight.getUTCMonth(),
+    date: jstMidnight.getUTCDate(),
+    hour: jstMidnight.getUTCHours(),
+    minute: 0,
+    latitude: 35.6895, longitude: 139.6917
+  });
   const h = new Horoscope({ origin, houseSystem:"placidus", zodiac:"tropical",
     aspectPoints:[], aspectWithPoints:[], aspectTypes:[], language:"en" });
   return bodyLon(h, key);
@@ -912,7 +921,7 @@ function renderEphemMonth(){
     });
 
     html += `</tbody></table></div>`;
-    html += `<p class="note">各日0時UTC / 今日の行はハイライト表示</p>`;
+    html += `<p class="note">各日 日本時間0時時点 / 今日の行はハイライト表示</p>`;
     area.innerHTML = html;
   }, 10);
 }
@@ -971,5 +980,4 @@ function initAddHome(){
 }
 
 initEphem();
-initAddHome();
 
