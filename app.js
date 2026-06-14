@@ -1198,19 +1198,39 @@ function buildPrintAspectTable(title, rowHoro, colHoro, color){
   return html + "</table>";
 }
 
-// SVG内のCSS変数を印刷用の実色に置換
-function resolvesvgForPrint(svgEl){
-  const clone = svgEl.cloneNode(true);
-  const varMap = {
-    "--text":"#3c352c","--text-dim":"#9b9186","--line":"#ece3d2",
-    "--accent":"#9b6fd9","--accent2":"#1f9488","--panel":"#ffffff","--panel2":"#f6efe1"
+// SVGを印刷用に白背景・実色で書き出す
+function resolvesvgForPrint(svgDom){
+  const clone = svgDom.cloneNode(true);
+  // 背景を白に
+  clone.style.background = "#fff";
+
+  // CSSクラスごとの印刷用スタイルを直接適用
+  const classStyles = {
+    "ring-circle":   "fill:none;stroke:#bbb;stroke-width:1.2",
+    "zodiac-seg":    "stroke:#bbb;stroke-width:1",
+    "house-line":    "stroke:#999;stroke-width:1;stroke-dasharray:2,2",
+    "house-num":     "fill:#666;font-size:15px;text-anchor:middle;dominant-baseline:central;font-weight:600",
+    "zodiac-glyph":  "font-size:30px;text-anchor:middle;dominant-baseline:central",
+    "planet-glyph":  "font-size:24px;text-anchor:middle;dominant-baseline:central;font-weight:bold",
+    "planet-line":   "stroke-width:1.4;opacity:.6",
+    "aspect-line":   "stroke-width:1.2;opacity:.5",
   };
-  let html = clone.outerHTML;
-  Object.entries(varMap).forEach(([k,v])=>{
-    html = html.replaceAll(`var(${k})`, v);
+  // house-line angle
+  clone.querySelectorAll(".house-line.angle").forEach(e=>{
+    e.setAttribute("style","stroke:#333;stroke-width:2.4;stroke-dasharray:none");
   });
-  // 背景を白、リング円を薄灰に
-  html = html.replaceAll('fill:none;stroke:var(--text);stroke-width:2','fill:none;stroke:#aaa;stroke-width:1.2');
+  Object.entries(classStyles).forEach(([cls, style])=>{
+    clone.querySelectorAll(`.${cls}`).forEach(e=>{
+      const existing = e.getAttribute("style")||"";
+      // angle は上で処理済みなのでスキップ
+      if(cls==="house-line" && e.classList.contains("angle")) return;
+      e.setAttribute("style", style + (existing ? ";"+existing : ""));
+    });
+  });
+  // var(--text) などが残っていれば置換
+  let html = clone.outerHTML;
+  const varMap = {"var(--text)":"#333","var(--text-dim)":"#888","var(--line)":"#ccc","var(--accent)":"#7b4fbf","var(--accent2)":"#1a7a6e"};
+  Object.entries(varMap).forEach(([k,v])=>{ html = html.replaceAll(k,v); });
   return html;
 }
 
@@ -1220,19 +1240,19 @@ function openPrintWindow(titleStr, profileHTML, svgHTML, dataSec, printCSS){
 <title>${titleStr}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:"Hiragino Sans","Noto Sans JP",sans-serif;font-size:8pt;color:#222;background:#fff;padding:8mm 10mm;}
-@page{size:A4 portrait;margin:8mm 10mm;}
-h1{font-size:12pt;margin-bottom:4px;color:#555;border-bottom:2px solid #ccc;padding-bottom:3px;}
-.pinfo{display:flex;flex-wrap:wrap;gap:3px 14px;font-size:7.5pt;color:#444;margin:4px 0 6px;padding-bottom:5px;border-bottom:1px solid #eee;}
-.wheel-wrap{text-align:center;margin:4px 0;}
-.wheel-wrap svg{width:140mm;height:140mm;}
-.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px;}
-.pt{width:100%;border-collapse:collapse;font-size:6.5pt;margin-bottom:5px;}
-.pt caption{font-size:7.5pt;margin-bottom:2px;font-weight:700;}
-.pt th,.pt td{border:1px solid #ddd;padding:2px 3px;text-align:left;}
+body{font-family:"Hiragino Sans","Noto Sans JP",sans-serif;font-size:7.5pt;color:#222;background:#fff;padding:6mm 8mm;}
+@page{size:A4 portrait;margin:6mm 8mm;}
+h1{font-size:11pt;margin-bottom:3px;color:#444;border-bottom:2px solid #ccc;padding-bottom:2px;}
+.pinfo{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:7pt;color:#444;margin:3px 0 5px;padding-bottom:4px;border-bottom:1px solid #eee;}
+.wheel-wrap{text-align:center;margin:3px 0;}
+.wheel-wrap svg{width:120mm;height:120mm;}
+.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:5px;}
+.pt{width:100%;border-collapse:collapse;font-size:6pt;margin-bottom:4px;}
+.pt caption{font-size:7pt;margin-bottom:2px;font-weight:700;text-align:left;}
+.pt th,.pt td{border:1px solid #ddd;padding:1.5px 3px;text-align:left;}
 .pt th{background:#f5f5f5;font-weight:600;}
 .pt-aspect{grid-column:1/-1;}
-.pt-aspect th,.pt-aspect td{text-align:center;padding:1px 2px;font-size:6pt;}
+.pt-aspect th,.pt-aspect td{text-align:center;padding:1px;font-size:5.5pt;}
 ${printCSS||""}
 </style></head><body>
 <h1>ホロスコープ作成</h1>
@@ -1263,37 +1283,23 @@ function initPrint(){
     </div>`;
 
     let dataSec = "";
-    const rings = [];
+
     if(currentMode==="double"){
       const transit = transitHoroscope(p, getTargetDate());
-      rings.push({key:"transit", horoscope:transit, color:RING_COLORS.transit});
+      dataSec += buildPrintBodiesTable("トランジットの天体配置", transit, RING_COLORS.transit);
+      dataSec += buildPrintAspectTable("アスペクト表(縦:ネイタル×横:トランジット)", natal, transit, RING_COLORS.transit);
     } else if(currentMode==="triple"){
       const transit    = transitHoroscope(p, getTargetDate());
       const progressed = progressedHoroscope(p, getTargetDate());
-      rings.push({key:"natal",    horoscope:natal,      color:RING_COLORS.natal});
-      rings.push({key:"progress", horoscope:progressed, color:RING_COLORS.progress});
-      rings.push({key:"transit",  horoscope:transit,    color:RING_COLORS.transit});
-    } else {
-      rings.push({key:"natal", horoscope:natal, color:RING_COLORS.natal});
-    }
-
-    rings.forEach(r=>{
-      dataSec += buildPrintBodiesTable(RING_LABELS[r.key]+"の天体配置", r.horoscope, r.color);
-    });
-
-    // ハウスカスプはネイタル/三重円のみ
-    if(currentMode==="natal" || currentMode==="triple"){
+      dataSec += buildPrintBodiesTable("ネイタルの天体配置",    natal,      RING_COLORS.natal);
+      dataSec += buildPrintBodiesTable("プログレスの天体配置",  progressed, RING_COLORS.progress);
+      dataSec += buildPrintBodiesTable("トランジットの天体配置",transit,    RING_COLORS.transit);
       dataSec += buildPrintHousesTable(natal);
-    }
-
-    if(currentMode==="natal"){
+      dataSec += buildPrintAspectTable("アスペクト表(縦:ネイタル×横:プログレス)", natal, progressed, RING_COLORS.progress);
+    } else {
+      dataSec += buildPrintBodiesTable("ネイタルの天体配置", natal, RING_COLORS.natal);
+      dataSec += buildPrintHousesTable(natal);
       dataSec += buildPrintAspectTable("アスペクト表(ネイタル×ネイタル)", natal, natal, RING_COLORS.natal);
-    } else if(currentMode==="double"){
-      const tr = transitHoroscope(p, getTargetDate());
-      dataSec += buildPrintAspectTable("アスペクト表(縦:ネイタル×横:トランジット)", natal, tr, RING_COLORS.transit);
-    } else if(currentMode==="triple"){
-      const pr = progressedHoroscope(p, getTargetDate());
-      dataSec += buildPrintAspectTable("アスペクト表(縦:ネイタル×横:プログレス)", natal, pr, RING_COLORS.progress);
     }
 
     openPrintWindow(`ホロスコープ - ${p.name||""}`, profileHTML, svgHTML, dataSec, "");
