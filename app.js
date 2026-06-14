@@ -720,13 +720,21 @@ function renderAll(){
 
   // データ表
   let html = "";
-  rings.forEach(r=>{
-    html += bodiesTable(RING_LABELS[r.key]+"の天体配置", r.horoscope, r.color);
-  });
-  html += housesTable(natal);
-  if(currentMode==="double" || currentMode==="triple"){
-    // 二重円・三重円ではハウスカスプ表を非表示
-    html = html.replace(/<table>[\s\S]*?ハウス・カスプ[\s\S]*?<\/table>/, "");
+  if(currentMode==="double"){
+    const transitRing = rings.find(r=>r.key==="transit");
+    if(transitRing) html += bodiesTable("トランジットの天体配置", transitRing.horoscope, transitRing.color);
+  } else if(currentMode==="triple"){
+    const progressRing = rings.find(r=>r.key==="progress");
+    if(progressRing) html += bodiesTable("プログレスの天体配置", progressRing.horoscope, progressRing.color);
+  } else {
+    rings.forEach(r=>{
+      html += bodiesTable(RING_LABELS[r.key]+"の天体配置", r.horoscope, r.color);
+    });
+  }
+
+  // ハウスカスプはネイタルのみ
+  if(currentMode==="natal"){
+    html += housesTable(natal);
   }
 
   if(currentMode==="natal"){
