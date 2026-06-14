@@ -465,7 +465,8 @@ function renderWheel(natal, rings, ascDeg){
     const iy1 = CY - ZODIAC_INNER*Math.sin(midAngleRad1);
     const ix2 = CX + ZODIAC_INNER*Math.cos(midAngleRad2);
     const iy2 = CY - ZODIAC_INNER*Math.sin(midAngleRad2);
-    const pathD = `M${ix1},${iy1} L${ox1},${oy1} A${ZODIAC_OUTER},${ZODIAC_OUTER} 0 0,1 ${ox2},${oy2} L${ix2},${iy2} A${ZODIAC_INNER},${ZODIAC_INNER} 0 0,0 ${ix1},${iy1}Z`;
+    // 反時計回り: outer arc sweep=0, inner arc sweep=1
+    const pathD = `M${ix1},${iy1} L${ox1},${oy1} A${ZODIAC_OUTER},${ZODIAC_OUTER} 0 0,0 ${ox2},${oy2} L${ix2},${iy2} A${ZODIAC_INNER},${ZODIAC_INNER} 0 0,1 ${ix1},${iy1}Z`;
     svgEl("path",{d:pathD, fill:SIGNS[i].bgColor, stroke:"none"},svg);
 
     const p1 = polar(lonStart, ascDeg, ZODIAC_INNER);
