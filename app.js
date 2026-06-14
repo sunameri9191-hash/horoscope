@@ -1336,24 +1336,64 @@ function buildEphemPrintMonth(year, month){
 }
 
 function initEphemPrint(){
-  el("ephemPrintBtn").addEventListener("click", ()=>{
-    const y = ephemCurrentYear;
-    const m = ephemCurrentMonth;
-    // 当月と翌月
-    const m2 = m===11 ? 0 : m+1;
-    const y2 = m===11 ? y+1 : y;
+  const printBtn   = el("ephemPrintBtn");
+  const modal      = el("ephemPrintModal");
+  const startInput = el("ephemPrintStart");
+  const endInput   = el("ephemPrintEnd");
+  const execBtn    = el("ephemPrintExec");
+  const cancelBtn  = el("ephemPrintCancel");
 
-    const sec = buildEphemPrintMonth(y, m) + buildEphemPrintMonth(y2, m2);
+  printBtn.addEventListener("click", ()=>{
+    const y = ephemCurrentYear;
+    startInput.value = `${y}-01`;
+    endInput.value   = `${y}-12`;
+    modal.classList.remove("hidden");
+  });
+
+  cancelBtn.addEventListener("click", ()=>{ modal.classList.add("hidden"); });
+  modal.addEventListener("click", e=>{ if(e.target===modal) modal.classList.add("hidden"); });
+
+  execBtn.addEventListener("click", ()=>{
+    const startVal = startInput.value;
+    const endVal   = endInput.value;
+    if(!startVal || !endVal){ alert("開始年月と終了年月を入力してください"); return; }
+    const [sy, sm] = startVal.split("-").map(Number);
+    const [ey, em] = endVal.split("-").map(Number);
+    if(sy*12+sm > ey*12+em){ alert("終了年月は開始年月より後にしてください"); return; }
+    modal.classList.add("hidden");
+
+    const months = [];
+    let cy=sy, cm=sm;
+    while(cy*12+cm <= ey*12+em){
+      months.push({y:cy, m:cm-1});
+      cm++; if(cm>12){ cm=1; cy++; }
+    }
+
+    const pages = [];
+    for(let i=0; i<months.length; i+=2) pages.push(months.slice(i,i+2));
 
     const css = `
-.em-block{margin-bottom:6mm;}
+.em-page{page-break-after:always;}
+.em-page:last-child{page-break-after:auto;}
+.em-block{margin-bottom:4mm;}
 .em-title{font-size:10pt;font-weight:700;margin-bottom:2mm;color:#555;}
-.em-table{width:100%;border-collapse:collapse;font-size:6pt;}
+.em-table{width:100%;border-collapse:collapse;font-size:5.5pt;}
 .em-table th,.em-table td{border:1px solid #ddd;padding:1px 2px;text-align:center;line-height:1.3;}
-.em-table th{background:#f5f5f5;font-size:7pt;}
-.em-day{font-weight:700;font-size:6.5pt;}
+.em-table th{background:#f5f5f5;font-size:6.5pt;}
+.em-day{font-weight:700;font-size:6pt;}
 `;
-    openPrintWindow(`天文歴 ${y}年${MONTH_JA[m]}〜${y2}年${MONTH_JA[m2]}`, "", "", sec, css);
+    let allPages = "";
+    pages.forEach(pair=>{
+      let pg = `<div class="em-page">`;
+      pair.forEach(({y,m})=>{ pg += buildEphemPrintMonth(y,m); });
+      pg += `</div>`;
+      allPages += pg;
+    });
+
+    openPrintWindow(
+      `天文歴 ${sy}年${MONTH_JA[sm-1]}〜${ey}年${MONTH_JA[em-1]}`,
+      "", "", allPages, css
+    );
   });
 }
 

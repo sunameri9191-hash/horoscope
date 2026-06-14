@@ -151,13 +151,33 @@
     </div>
   </section>
 
+  <!-- ===== 天文歴印刷モーダル ===== -->
+  <div id="ephemPrintModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>天文歴の印刷期間を選択</h3>
+      <div class="row twocol">
+        <label>開始年月
+          <input type="month" id="ephemPrintStart">
+        </label>
+        <label>終了年月
+          <input type="month" id="ephemPrintEnd">
+        </label>
+      </div>
+      <p class="note" style="margin-top:4px">※A4縦に2ヶ月分ずつ印刷されます</p>
+      <div class="row buttons" style="margin-top:10px">
+        <button id="ephemPrintExec" class="primary">🖨 印刷する</button>
+        <button id="ephemPrintCancel" class="danger">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
   <footer>
     <p>計算: astronomy-engine / circular-natal-horoscope-js (トロピカル黄道帯)</p>
-    <p>build v24</p>
+    <p>build v25</p>
   </footer>
 
 </div>
 <script src="astro.bundle.js"></script>
-<script src="app.js?v=24"></script>
+<script src="app.js?v=25"></script>
 </body>
 </html>
