@@ -1373,14 +1373,16 @@ function initEphemPrint(){
     for(let i=0; i<months.length; i+=2) pages.push(months.slice(i,i+2));
 
     const css = `
-.em-page{page-break-after:always;}
+body{margin:0;padding:4mm 6mm;}
+@page{size:A4 portrait;margin:4mm 6mm;}
+.em-page{width:100%;height:277mm;overflow:hidden;page-break-after:always;display:grid;grid-template-rows:1fr 1fr;gap:3mm;}
 .em-page:last-child{page-break-after:auto;}
-.em-block{margin-bottom:4mm;}
-.em-title{font-size:10pt;font-weight:700;margin-bottom:2mm;color:#555;}
-.em-table{width:100%;border-collapse:collapse;font-size:5.5pt;}
-.em-table th,.em-table td{border:1px solid #ddd;padding:1px 2px;text-align:center;line-height:1.3;}
-.em-table th{background:#f5f5f5;font-size:6.5pt;}
-.em-day{font-weight:700;font-size:6pt;}
+.em-block{overflow:hidden;}
+.em-title{font-size:9pt;font-weight:700;margin-bottom:1.5mm;color:#555;}
+.em-table{width:100%;border-collapse:collapse;font-size:5pt;table-layout:fixed;}
+.em-table th,.em-table td{border:1px solid #ddd;padding:1px;text-align:center;line-height:1.25;overflow:hidden;}
+.em-table th{background:#f5f5f5;font-size:5.5pt;}
+.em-day{font-weight:700;font-size:5.5pt;width:14px;}
 `;
     let allPages = "";
     pages.forEach(pair=>{
