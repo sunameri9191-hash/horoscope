@@ -237,6 +237,15 @@ function init(){
       currentMode = btn.dataset.mode;
       el("chartTitle").textContent = (currentMode==="progress") ? "セカンダリープログレッション" : "ホロスコープ";
       el("chartSubtitle").style.display = (currentMode==="progress") ? "block" : "none";
+      // サブタブ表示切替
+      const subTabs = el("progressSubTabs");
+      if(currentMode==="progress"){
+        subTabs.style.display = "flex";
+      }else{
+        subTabs.style.display = "none";
+        progBody = "moon";
+        subTabs.querySelectorAll(".subtab").forEach((b,i)=>b.classList.toggle("active",i===0));
+      }
       updateTargetDateRow();
       renderAll();
     });
@@ -252,7 +261,11 @@ function init(){
     const p = getActive();
     if(!profileIsComplete(p)) return;
     const natal = natalHoroscope(p);
-    renderMoonTable(p, natal);
+    if(progBody === "sun"){
+      renderProgressedSunTable(p, natal);
+    } else {
+      renderMoonTable(p, natal);
+    }
   });
   el("f_moonFromYear").value = new Date().getFullYear();
 
@@ -998,3 +1011,150 @@ function initAddHome(){
 
 initEphem();
 
+
+/* ============================================================
+   プロフィールトグル
+   ============================================================ */
+function initProfileToggle(){
+  const btn  = el("profileToggleBtn");
+  const body = el("profileBody");
+  let open   = true;
+
+  btn.addEventListener("click", ()=>{
+    open = !open;
+    body.classList.toggle("hidden", !open);
+    btn.textContent = open ? "▲ 閉じる" : "▼ 開く";
+  });
+
+  // 「作成」ボタン押したら閉じる
+  el("saveProfileBtn").addEventListener("click", ()=>{
+    open = false;
+    body.classList.add("hidden");
+    btn.textContent = "▼ 開く";
+  }, true); // capture=true で既存リスナの前に実行
+}
+
+/* ============================================================
+   プログレスサブタブ(☽/☉切替)
+   ============================================================ */
+let progBody = "moon"; // "moon" | "sun"
+
+function updateProgSubTabs(){
+  const subTabs = el("progressSubTabs");
+  if(currentMode === "progress"){
+    subTabs.style.display = "flex";
+  } else {
+    subTabs.style.display = "none";
+  }
+}
+
+// 太陽プログレス年表
+function computeProgressedSunTable(p, natal){
+  const dt    = dateTimeFromProfile(p);
+  const birth = new Date(dt.year, dt.month, dt.date, dt.hour, dt.minute);
+
+  const rows = [];
+  let prevSign = null;
+
+  // 0〜100歳まで1年刻みでサイン変化を検出
+  for(let age = 0; age <= 100; age++){
+    const progDate = new Date(birth.getTime() + age * 86400000);
+    const h = buildHoroscopeLight(
+      progDate.getFullYear(), progDate.getMonth(), progDate.getDate(),
+      progDate.getHours(), progDate.getMinutes(),
+      p.lat, p.lon, p.houseSystem
+    );
+    const lon  = bodyLon(h, "sun");
+    const sign = signOfLon(lon);
+
+    if(prevSign && prevSign.key !== sign.key){
+      // 2分探索で正確な日付を特定
+      let a0 = age - 1, a1 = age;
+      for(let iter = 0; iter < 22; iter++){
+        const am = (a0 + a1) / 2;
+        const pd = new Date(birth.getTime() + am * 86400000);
+        const hm = buildHoroscopeLight(
+          pd.getFullYear(), pd.getMonth(), pd.getDate(),
+          pd.getHours(), pd.getMinutes(),
+          p.lat, p.lon, p.houseSystem
+        );
+        const sm = signOfLon(bodyLon(hm, "sun"));
+        if(sm.key === prevSign.key) a0 = am; else a1 = am;
+      }
+      const exactAge  = (a0 + a1) / 2;
+      const exactDate = new Date(birth.getTime() + exactAge * 365.25 * 86400000);
+      rows.push({
+        sign,
+        age:  Math.floor(exactAge),
+        date: exactDate,
+        deg:  formatDeg(bodyLon(
+          buildHoroscopeLight(
+            new Date(birth.getTime() + exactAge*86400000).getFullYear(),
+            new Date(birth.getTime() + exactAge*86400000).getMonth(),
+            new Date(birth.getTime() + exactAge*86400000).getDate(),
+            0, 0, p.lat, p.lon, p.houseSystem
+          ), "sun"
+        )),
+      });
+    }
+    prevSign = sign;
+  }
+  return rows;
+}
+
+function renderProgressedSunTable(p, natal){
+  const area = el("progressResult");
+  area.innerHTML = "<p class='note'>計算中…</p>";
+  setTimeout(()=>{
+    const rows = computeProgressedSunTable(p, natal);
+    let html = `<table><caption style="color:${RING_COLORS.progress}">The Progressed ☉\uFE0E Sun Calendar</caption>`
+      + `<tr><th>サイン</th><th>移行日</th><th>年齢</th></tr>`;
+    rows.forEach(r=>{
+      html += `<tr>`
+        + `<td style="color:${r.sign.color}">${r.sign.glyph}\uFE0E ${r.sign.ja}</td>`
+        + `<td>${formatJpDate(r.date)}</td>`
+        + `<td>${r.age}歳頃</td>`
+        + `</tr>`;
+    });
+    html += "</table>";
+    html += `<p class="note">出生から100歳までのプログレス太陽のサイン移行一覧。各移行の正確な日付を2分探索で算出しています。</p>`;
+    area.innerHTML = html;
+  }, 10);
+}
+
+function initProgressSubTabs(){
+  const subTabs = el("progressSubTabs");
+  subTabs.querySelectorAll(".subtab").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      subTabs.querySelectorAll(".subtab").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      progBody = btn.dataset.prog;
+      // サブタイトル更新
+      el("chartSubtitle").textContent = progBody === "moon"
+        ? "The Progressed Moon Calendar"
+        : "The Progressed Sun Calendar";
+      // 再計算
+      const p = getActive();
+      if(!profileIsComplete(p)) return;
+      const natal = natalHoroscope(p);
+      if(progBody === "moon"){
+        renderMoonTable(p, natal);
+      } else {
+        renderProgressedSunTable(p, natal);
+      }
+    });
+  });
+}
+
+/* ============================================================
+   印刷 / PDF書き出し
+   ============================================================ */
+function initPrint(){
+  el("printBtn").addEventListener("click", ()=>{
+    window.print();
+  });
+}
+
+initProfileToggle();
+initProgressSubTabs();
+initPrint();

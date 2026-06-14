@@ -7,6 +7,18 @@
 <meta name="apple-mobile-web-app-title" content="ホロスコープ">
 <title>ホロスコープ作成</title>
 <link rel="stylesheet" href="style.css">
+<style>
+@media print {
+  .topbar, .chart-tabs, #targetDateRow, #progressControls,
+  #profileToggleBtn, .row.buttons, #detailSection h2 + *,
+  .ephemcard, footer, #nowBtn, #newProfileBtn,
+  #ephemToggle, #ephemBody, button { display:none !important; }
+  .card { box-shadow:none !important; border:1px solid #ccc !important; }
+  #printName { display:block !important; }
+  body { background:#fff !important; color:#000 !important; }
+  #app { max-width:100% !important; padding:0 !important; }
+}
+</style>
 </head>
 <body>
 <div id="app">
@@ -17,70 +29,87 @@
     <button id="newProfileBtn" class="iconbtn" title="新しいプロフィール">＋</button>
   </header>
 
-  <!-- ===== プロフィール編集 ===== -->
-  <section id="profileForm" class="card">
-    <h2>プロフィール</h2>
-    <label>名前(表示用)
-      <input type="text" id="f_name" placeholder="">
-    </label>
-    <div class="row">
-      <label>生年月日
-        <input type="date" id="f_date" min="1900-01-01" max="2099-12-31">
-      </label>
+  <!-- ===== プロフィール編集(トグル) ===== -->
+  <section class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <h2 style="margin:0">プロフィール</h2>
+      <button id="profileToggleBtn" class="small">▲ 閉じる</button>
     </div>
-    <div class="row">
-      <label class="checkbox">
-        <input type="checkbox" id="f_timeUnknown">
-        出生時刻が分からない(正午で仮算出)
+    <div id="profileBody">
+      <label style="margin-top:10px">名前(表示用)
+        <input type="text" id="f_name" placeholder="">
       </label>
-    </div>
-    <div class="row" id="timeRow">
-      <label>出生時刻
-        <input type="time" id="f_time" value="12:00">
-      </label>
-    </div>
-    <div class="row">
-      <label>出生地(候補から選択)
-        <select id="f_citySelect"></select>
-      </label>
-    </div>
-    <div class="row twocol">
-      <label>緯度
-        <input type="number" id="f_lat" step="0.0001" placeholder="35.6895">
-      </label>
-      <label>経度
-        <input type="number" id="f_lon" step="0.0001" placeholder="139.6917">
-      </label>
-    </div>
-    <div class="row">
-      <label>ハウスシステム
-        <select id="f_houseSystem">
-          <option value="placidus">プラシダス (Placidus)</option>
-          <option value="koch">コッホ (Koch)</option>
-          <option value="equal-house">イコール (Equal House)</option>
-          <option value="whole-sign">ホールサイン (Whole Sign)</option>
-          <option value="campanus">カンパヌス (Campanus)</option>
-          <option value="regiomontanus">レジオモンタヌス (Regiomontanus)</option>
-          <option value="topocentric">トポセントリック (Topocentric)</option>
-        </select>
-      </label>
-    </div>
-    <div class="row buttons">
-      <button id="saveProfileBtn" class="primary">作成</button>
-      <button id="deleteProfileBtn" class="danger">このプロフィールを削除</button>
+      <div class="row">
+        <label>生年月日
+          <input type="date" id="f_date" min="1900-01-01" max="2099-12-31">
+        </label>
+      </div>
+      <div class="row">
+        <label class="checkbox">
+          <input type="checkbox" id="f_timeUnknown">
+          出生時刻が分からない(正午で仮算出)
+        </label>
+      </div>
+      <div class="row" id="timeRow">
+        <label>出生時刻
+          <input type="time" id="f_time" value="12:00">
+        </label>
+      </div>
+      <div class="row">
+        <label>出生地(候補から選択)
+          <select id="f_citySelect"></select>
+        </label>
+      </div>
+      <div class="row twocol">
+        <label>緯度
+          <input type="number" id="f_lat" step="0.0001" placeholder="35.6895">
+        </label>
+        <label>経度
+          <input type="number" id="f_lon" step="0.0001" placeholder="139.6917">
+        </label>
+      </div>
+      <div class="row">
+        <label>ハウスシステム
+          <select id="f_houseSystem">
+            <option value="placidus">プラシダス (Placidus)</option>
+            <option value="koch">コッホ (Koch)</option>
+            <option value="equal-house">イコール (Equal House)</option>
+            <option value="whole-sign">ホールサイン (Whole Sign)</option>
+            <option value="campanus">カンパヌス (Campanus)</option>
+            <option value="regiomontanus">レジオモンタヌス (Regiomontanus)</option>
+            <option value="topocentric">トポセントリック (Topocentric)</option>
+          </select>
+        </label>
+      </div>
+      <div class="row buttons">
+        <button id="saveProfileBtn" class="primary">作成</button>
+        <button id="deleteProfileBtn" class="danger">このプロフィールを削除</button>
+      </div>
     </div>
   </section>
 
   <!-- ===== チャート切替 ===== -->
   <section class="card">
-    <h2 id="chartTitle">ホロスコープ</h2>
-    <p id="chartSubtitle" style="display:none;font-size:.8rem;color:var(--text-dim);margin:-6px 0 8px;letter-spacing:.05em">The Progressed Moon Calendar</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div>
+        <h2 id="chartTitle" style="margin:0">ホロスコープ</h2>
+        <p id="chartSubtitle" style="display:none;font-size:.8rem;color:var(--text-dim);margin:2px 0 0;letter-spacing:.05em">The Progressed Moon Calendar</p>
+      </div>
+      <button id="printBtn" class="small" title="印刷/PDF">🖨 印刷</button>
+    </div>
     <div class="chart-tabs">
       <button class="tab active" data-mode="natal">ネイタル</button>
       <button class="tab" data-mode="double">二重円</button>
       <button class="tab" data-mode="triple">三重円</button>
       <button class="tab" data-mode="progress">一日一年法</button>
     </div>
+
+    <!-- 一日一年法サブタブ -->
+    <div id="progressSubTabs" class="hidden" style="display:none;gap:6px;margin:6px 0">
+      <button class="subtab active" data-prog="moon">☽ 月</button>
+      <button class="subtab" data-prog="sun">☉ 太陽</button>
+    </div>
+
     <div id="targetDateRow" class="row hidden">
       <label id="targetDateLabel">対象日時(トランジット)
         <input type="datetime-local" id="f_targetDate">
@@ -107,7 +136,7 @@
   </section>
 
   <!-- ===== 天文歴(折りたたみ) ===== -->
-  <section class="card">
+  <section class="card ephemcard">
     <button id="ephemToggle" style="width:100%;text-align:left;background:none;border:none;color:var(--accent);font-size:.95rem;font-weight:700;padding:0;cursor:pointer">▼ 天文歴を開く</button>
     <div id="ephemBody" class="hidden">
       <div class="row" style="align-items:center;margin-top:10px;gap:8px">
@@ -121,11 +150,11 @@
 
   <footer>
     <p>計算: astronomy-engine / circular-natal-horoscope-js (トロピカル黄道帯)</p>
-    <p>build v16</p>
+    <p>build v18</p>
   </footer>
 
 </div>
 <script src="astro.bundle.js"></script>
-<script src="app.js?v=16"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>

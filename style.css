@@ -306,3 +306,25 @@ footer{
   color:var(--text-dim);
   font-size:.85rem;
 }
+
+/* ===== プログレスサブタブ ===== */
+#progressSubTabs{
+  display:flex;
+  gap:6px;
+  margin:6px 0;
+}
+.subtab{
+  font-size:.82rem;
+  padding:6px 16px;
+  border-radius:20px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  color:var(--text-dim);
+  cursor:pointer;
+}
+.subtab.active{
+  background:linear-gradient(90deg,#cdb8f2,#dccdf7);
+  color:#4a3a78;
+  border-color:transparent;
+  font-weight:700;
+}
