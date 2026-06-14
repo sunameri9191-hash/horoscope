@@ -18,9 +18,11 @@
     <button id="addHomeBtn" class="iconbtn" title="ホーム画面に追加">🏠</button>
   </header>
 
-  <!-- ホーム追加ガイド(iOS用) -->
-  <div id="iosGuide" class="card hidden" style="text-align:center;padding:12px">
-    <p style="font-size:.85rem;margin:0 0 6px">iOSの場合: Safariの<strong>共有ボタン</strong>→「<strong>ホーム画面に追加</strong>」をタップ</p>
+  <!-- ホーム追加ガイド -->
+  <div id="iosGuide" class="card hidden" style="padding:12px">
+    <p style="font-size:.85rem;margin:0 0 8px;font-weight:700">ホーム画面への追加方法</p>
+    <p style="font-size:.8rem;margin:0 0 4px">📱 <strong>Android(Brave/Chrome)</strong><br>ブラウザ右上のメニュー(⋮)→「ホーム画面に追加」</p>
+    <p style="font-size:.8rem;margin:0 0 8px">🍎 <strong>iPhone(Safari)</strong><br>下部の共有ボタン(□↑)→「ホーム画面に追加」</p>
     <button id="iosGuideClose" class="small">閉じる</button>
   </div>
 
@@ -28,7 +30,7 @@
   <section id="profileForm" class="card">
     <h2>プロフィール</h2>
     <label>名前(表示用)
-      <input type="text" id="f_name" placeholder="例: ナソ">
+      <input type="text" id="f_name" placeholder="">
     </label>
     <div class="row">
       <label>生年月日
@@ -127,11 +129,11 @@
 
   <footer>
     <p>計算: astronomy-engine / circular-natal-horoscope-js (トロピカル黄道帯)</p>
-    <p>build v9</p>
+    <p>build v10</p>
   </footer>
 
 </div>
 <script src="astro.bundle.js"></script>
-<script src="app.js?v=9"></script>
+<script src="app.js?v=10"></script>
 </body>
 </html>

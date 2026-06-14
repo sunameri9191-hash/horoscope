@@ -962,6 +962,7 @@ function initAddHome(){
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(()=>{ deferredPrompt=null; });
     }else{
+      // Brave/Safari/その他は手順ガイドを表示
       guide.classList.toggle("hidden");
     }
   });
