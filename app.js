@@ -496,18 +496,23 @@ function renderWheel(natal, rings, ascDeg){
   const innerMostRadius = rings.length>0 ? (ZODIAC_INNER - rings.length*42 - 10) : ZODIAC_INNER-20;
   const houseLineInner = Math.max(innerMostRadius-15, 40);
 
+  // アスペクト円・ハウス番号配置の基準半径を先に計算
+  const aspectRadius = Math.max(innerMostRadius - 8, 30);
+
   houses.forEach((cusp,i)=>{
-    const isAngle = (i===0 || i===3 || i===6 || i===9); // ASC, IC, DSC, MC
+    const isAngle = (i===0 || i===3 || i===6 || i===9);
     const center = {x:CX,y:CY};
     const p2 = polar(cusp, ascDeg, ZODIAC_INNER);
     svgEl("line",{x1:center.x,y1:center.y,x2:p2.x,y2:p2.y,class:"house-line"+(isAngle?" angle":"")},svg);
 
+    // ハウス番号は一番内側の中心円内に表示
     const next = houses[(i+1)%12];
     let span = norm360(next-cusp);
     if(span===0) span=30;
     const midLon = cusp + span/2;
-    const num = polar(midLon, ascDeg, houseLineInner+14);
-    svgEl("text",{x:num.x,y:num.y,class:"house-num"},svg).textContent = HOUSE_LABELS_JA[i];
+    const numRadius = Math.max(aspectRadius - 16, 22);
+    const num = polar(midLon, ascDeg, numRadius);
+    svgEl("text",{x:num.x,y:num.y,class:"house-num",style:"font-size:15px;fill:var(--text-dim);font-weight:600"},svg).textContent = HOUSE_LABELS_JA[i];
   });
 
   // ASC / MC ラベル
@@ -517,7 +522,6 @@ function renderWheel(natal, rings, ascDeg){
   svgEl("text",{x:mcP.x,y:mcP.y,class:"house-num",style:"fill:#c9a4ff;font-weight:bold;font-size:13px"},svg).textContent="MC";
 
   // ネイタルの主要アスペクト線(中心部)
-  const aspectRadius = Math.max(innerMostRadius - 8, 30);
   svgEl("circle",{cx:CX,cy:CY,r:aspectRadius,class:"ring-circle"},svg);
   const aspectKeys = BODIES.map(b=>b.key);
   for(let i=0;i<aspectKeys.length;i++){
