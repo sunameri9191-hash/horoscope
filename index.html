@@ -137,7 +137,10 @@
 
   <!-- ===== 天文歴(折りたたみ) ===== -->
   <section class="card ephemcard">
-    <button id="ephemToggle" style="width:100%;text-align:left;background:none;border:none;color:var(--accent);font-size:.95rem;font-weight:700;padding:0;cursor:pointer">▼ 天文歴を開く</button>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <button id="ephemToggle" style="background:none;border:none;color:var(--accent);font-size:.95rem;font-weight:700;padding:0;cursor:pointer">▼ 天文歴を開く</button>
+      <button id="ephemPrintBtn" class="small">🖨 印刷</button>
+    </div>
     <div id="ephemBody" class="hidden">
       <div class="row" style="align-items:center;margin-top:10px;gap:8px">
         <button id="ephemPrev" class="small">◀</button>
@@ -150,11 +153,11 @@
 
   <footer>
     <p>計算: astronomy-engine / circular-natal-horoscope-js (トロピカル黄道帯)</p>
-    <p>build v20</p>
+    <p>build v21</p>
   </footer>
 
 </div>
 <script src="astro.bundle.js"></script>
-<script src="app.js?v=20"></script>
+<script src="app.js?v=21"></script>
 </body>
 </html>
