@@ -821,3 +821,158 @@ function renderMoonTable(p, natal){
 }
 
 init();
+
+/* ============================================================
+   天文歴(エフェメリス)
+   ============================================================ */
+
+const EPHEM_BODIES = [
+  { key:"sun",     ja:"☉太陽",   glyph:"☉" },
+  { key:"moon",    ja:"☽月",     glyph:"☽" },
+  { key:"mercury", ja:"☿水星",   glyph:"☿" },
+  { key:"venus",   ja:"♀金星",   glyph:"♀" },
+  { key:"mars",    ja:"♂火星",   glyph:"♂" },
+  { key:"jupiter", ja:"♃木星",   glyph:"♃" },
+  { key:"saturn",  ja:"♄土星",   glyph:"♄" },
+  { key:"uranus",  ja:"♅天王星", glyph:"♅" },
+  { key:"neptune", ja:"♆海王星", glyph:"♆" },
+  { key:"pluto",   ja:"♇冥王星", glyph:"♇" },
+  { key:"chiron",  ja:"⚷キロン", glyph:"⚷" },
+];
+
+const MONTH_JA = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+
+// 月の1日正午のホロスコープを作り、各天体のサイン・逆行を返す
+function ephemMonthData(year, month){
+  // month: 0-based
+  const origin = new Origin({ year, month, date:1, hour:12, minute:0, latitude:35.6895, longitude:139.6917 });
+  const h = new Horoscope({
+    origin, houseSystem:"placidus", zodiac:"tropical",
+    aspectPoints:[], aspectWithPoints:[], aspectTypes:[], language:"en",
+  });
+  return EPHEM_BODIES.map(b=>{
+    const lon = bodyLon(h, b.key);
+    const sign = signOfLon(lon);
+    const retro = bodyRetro(h, b.key);
+    return { key:b.key, sign, lon, retro };
+  });
+}
+
+// 前月と比べてサインが変わったかチェック
+function buildEphemYear(year){
+  const rows = [];
+  let prev = null;
+  for(let m=0; m<12; m++){
+    const data = ephemMonthData(year, m);
+    rows.push({ month: m, data, prev });
+    prev = data;
+  }
+  return rows;
+}
+
+let ephemCache = {};
+let ephemYear = null;
+
+function renderEphemYear(year){
+  if(ephemYear === year) return;
+  ephemYear = year;
+
+  const area = el("ephemArea");
+  area.innerHTML = `<p class="ephem-loading">計算中… (${year}年)</p>`;
+
+  setTimeout(()=>{
+    if(!ephemCache[year]) ephemCache[year] = buildEphemYear(year);
+    const rows = ephemCache[year];
+
+    // ヘッダー
+    let html = `<div style="overflow-x:auto"><table class="ephem-table">`;
+    html += `<colgroup><col style="width:44px">`;
+    EPHEM_BODIES.forEach(()=> html += `<col style="width:52px">`);
+    html += `</colgroup><thead><tr><th>月</th>`;
+    EPHEM_BODIES.forEach(b=> html += `<th>${b.glyph}\uFE0E</th>`);
+    html += `</tr></thead><tbody>`;
+
+    rows.forEach(row=>{
+      html += `<tr><td class="month">${MONTH_JA[row.month]}</td>`;
+      row.data.forEach((d, bi)=>{
+        const prev = row.prev ? row.prev[bi] : null;
+        const changed = prev && prev.sign.key !== d.sign.key;
+        const retroChanged = prev && prev.retro !== d.retro;
+
+        let cell = `<span style="color:${d.sign.color}">${d.sign.glyph}\uFE0E</span>`;
+        if(changed){
+          cell = `<span class="ephem-change" style="color:${d.sign.color}">${d.sign.glyph}\uFE0E↑</span>`;
+        }
+        if(d.retro){
+          cell += `<br><span class="retro" style="color:#d1486a;font-size:.65rem">℞</span>`;
+        }
+        if(retroChanged && d.retro){
+          cell = `<span style="color:#d1486a;font-weight:bold">℞開始</span><br>${cell}`;
+        }else if(retroChanged && !d.retro){
+          cell = `<span style="color:#4caf82;font-weight:bold;font-size:.65rem">順行↑</span><br>${cell}`;
+        }
+        html += `<td>${cell}</td>`;
+      });
+      html += `</tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+    html += `<p class="note">各月1日正午時点 / ↑=サイン移動 / ℞=逆行中 / 順行↑=逆行終了</p>`;
+    area.innerHTML = html;
+  }, 10);
+}
+
+function initEphem(){
+  const thisYear = new Date().getFullYear();
+  const years = [thisYear-1, thisYear, thisYear+1, thisYear+2, thisYear+3];
+  const tabsEl = el("ephemYearTabs");
+  years.forEach((y, i)=>{
+    const btn = document.createElement("button");
+    btn.className = "ytab" + (i===1?" active":"");
+    btn.textContent = y+"年";
+    btn.addEventListener("click", ()=>{
+      tabsEl.querySelectorAll(".ytab").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      renderEphemYear(y);
+    });
+    tabsEl.appendChild(btn);
+  });
+  // デフォルトで今年を表示
+  renderEphemYear(thisYear);
+}
+
+/* ============================================================
+   ホーム画面追加ボタン
+   ============================================================ */
+function initAddHome(){
+  const btn = el("addHomeBtn");
+  const guide = el("iosGuide");
+  const closeBtn = el("iosGuideClose");
+
+  // Android Chrome: beforeinstallprompt イベントを捕捉
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", e=>{
+    e.preventDefault();
+    deferredPrompt = e;
+    btn.style.display = "flex";
+  });
+
+  btn.addEventListener("click", ()=>{
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(()=>{ deferredPrompt=null; });
+    }else{
+      // iOS Safari向けに手順を表示
+      guide.classList.toggle("hidden");
+    }
+  });
+
+  closeBtn.addEventListener("click", ()=>{
+    guide.classList.add("hidden");
+  });
+}
+
+// init に追加
+const _origInit = window.__horoInit;
+initEphem();
+initAddHome();

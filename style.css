@@ -234,3 +234,69 @@ footer{
 .planet-line{stroke-width:1.4;opacity:.6;}
 .ring-circle{fill:none;stroke:var(--text);stroke-width:2;}
 .aspect-line{stroke-width:1.2;opacity:.5;}
+
+/* ===== 天文歴 year tabs ===== */
+.year-tabs{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.year-tabs .ytab{
+  font-size:.82rem;
+  padding:6px 14px;
+  border-radius:20px;
+  background:var(--panel2);
+  border:1px solid var(--line);
+  color:var(--text-dim);
+  cursor:pointer;
+}
+.year-tabs .ytab.active{
+  background:linear-gradient(90deg,#cdb8f2,#dccdf7);
+  color:#4a3a78;
+  border-color:transparent;
+  font-weight:700;
+}
+
+/* ===== 天文歴 table ===== */
+.ephem-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:.74rem;
+  margin-bottom:12px;
+  table-layout:fixed;
+}
+.ephem-table th{
+  padding:4px 3px;
+  border-bottom:2px solid var(--line);
+  text-align:center;
+  font-size:.7rem;
+  color:var(--text-dim);
+  overflow:hidden;
+}
+.ephem-table td{
+  padding:3px 2px;
+  border-bottom:1px solid var(--line);
+  text-align:center;
+  font-size:.72rem;
+  line-height:1.35;
+}
+.ephem-table td.month{
+  font-weight:700;
+  color:var(--accent);
+  text-align:left;
+  font-size:.78rem;
+}
+.ephem-table td.retro{
+  color:#d1486a;
+  font-size:.68rem;
+}
+.ephem-change{
+  color:var(--text);
+  font-weight:600;
+}
+.ephem-loading{
+  text-align:center;
+  padding:16px;
+  color:var(--text-dim);
+  font-size:.85rem;
+}

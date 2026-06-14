@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-<title>星詠み日記 | Star Diary</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ホロスコープ">
+<title>ホロスコープ作成</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,41 +15,51 @@
     <h1>ホロスコープ作成</h1>
     <select id="profileSelect"></select>
     <button id="newProfileBtn" class="iconbtn" title="新しいプロフィール">＋</button>
+    <button id="addHomeBtn" class="iconbtn" title="ホーム画面に追加">🏠</button>
   </header>
+
+  <!-- ホーム追加ガイド(iOS用) -->
+  <div id="iosGuide" class="card hidden" style="text-align:center;padding:12px">
+    <p style="font-size:.85rem;margin:0 0 6px">iOSの場合: Safariの<strong>共有ボタン</strong>→「<strong>ホーム画面に追加</strong>」をタップしてください</p>
+    <button id="iosGuideClose" class="small">閉じる</button>
+  </div>
+
+  <!-- ===== 天文歴 ===== -->
+  <section class="card">
+    <h2>天文歴</h2>
+    <div class="row" style="margin-bottom:8px">
+      <div class="year-tabs" id="ephemYearTabs"></div>
+    </div>
+    <div id="ephemArea"><p class="note">年のタブを選ぶと表示されます</p></div>
+  </section>
 
   <!-- ===== プロフィール編集 ===== -->
   <section id="profileForm" class="card">
     <h2>プロフィール</h2>
-
     <label>名前(表示用)
       <input type="text" id="f_name" placeholder="例: ナソ">
     </label>
-
     <div class="row">
       <label>生年月日
         <input type="date" id="f_date" min="1900-01-01" max="2099-12-31">
       </label>
     </div>
-
     <div class="row">
       <label class="checkbox">
         <input type="checkbox" id="f_timeUnknown">
         出生時刻が分からない(正午で仮算出)
       </label>
     </div>
-
     <div class="row" id="timeRow">
       <label>出生時刻
         <input type="time" id="f_time" value="12:00">
       </label>
     </div>
-
     <div class="row">
       <label>出生地(候補から選択)
         <select id="f_citySelect"></select>
       </label>
     </div>
-
     <div class="row twocol">
       <label>緯度
         <input type="number" id="f_lat" step="0.0001" placeholder="例: 35.6895">
@@ -56,7 +68,6 @@
         <input type="number" id="f_lon" step="0.0001" placeholder="例: 139.6917">
       </label>
     </div>
-
     <div class="row">
       <label>ハウスシステム
         <select id="f_houseSystem">
@@ -70,7 +81,6 @@
         </select>
       </label>
     </div>
-
     <div class="row buttons">
       <button id="saveProfileBtn" class="primary">作成</button>
       <button id="deleteProfileBtn" class="danger">このプロフィールを削除</button>
@@ -86,14 +96,12 @@
       <button class="tab" data-mode="triple">三重円</button>
       <button class="tab" data-mode="progress">一日一年法</button>
     </div>
-
     <div id="targetDateRow" class="row hidden">
       <label id="targetDateLabel">対象日時(トランジット)
         <input type="datetime-local" id="f_targetDate">
       </label>
       <button id="nowBtn" class="small">現在時刻にする</button>
     </div>
-
     <div id="progressControls" class="row hidden">
       <label>表示開始年
         <input type="number" id="f_moonFromYear" min="1900" max="2099">
@@ -101,11 +109,9 @@
       <button id="moonCalcBtn" class="primary" style="flex:1;align-self:flex-end">計算する</button>
     </div>
     <div id="progressResult"></div>
-
     <div id="chartArea">
       <svg id="wheel" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
-
     <div id="legend" class="legend"></div>
     <div id="note" class="note"></div>
   </section>
@@ -117,12 +123,11 @@
 
   <footer>
     <p>計算: astronomy-engine / circular-natal-horoscope-js (トロピカル黄道帯)</p>
-    <p>build v7</p>
+    <p>build v8</p>
   </footer>
 
 </div>
-
 <script src="astro.bundle.js"></script>
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>
