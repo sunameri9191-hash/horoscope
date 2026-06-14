@@ -724,6 +724,10 @@ function renderAll(){
     html += bodiesTable(RING_LABELS[r.key]+"の天体配置", r.horoscope, r.color);
   });
   html += housesTable(natal);
+  if(currentMode==="double" || currentMode==="triple"){
+    // 二重円・三重円ではハウスカスプ表を非表示
+    html = html.replace(/<table>[\s\S]*?ハウス・カスプ[\s\S]*?<\/table>/, "");
+  }
 
   if(currentMode==="natal"){
     html += aspectGridTable("アスペクト表(ネイタル × ネイタル)", natal, natal, RING_COLORS.natal, true);
@@ -1151,11 +1155,128 @@ function initProgressSubTabs(){
 }
 
 /* ============================================================
-   印刷 / PDF書き出し
+   印刷 / PDF書き出し — 専用ウィンドウ生成
    ============================================================ */
+function buildPrintBodiesTable(title, horoscope, color){
+  let html = `<table class="pt"><caption style="color:${color};text-align:left;font-weight:700;padding:2px 0">${title}</caption>`;
+  html += "<tr><th>天体</th><th>サイン</th><th>度数</th><th>ハウス</th><th></th></tr>";
+  BODIES.concat([NODE_BODY]).forEach(b=>{
+    const lon   = bodyLon(horoscope, b.key);
+    const sign  = signOfLon(lon);
+    const retro = bodyRetro(horoscope, b.key);
+    const house = bodyHouse(horoscope, b.key);
+    html += `<tr><td>${b.glyph} ${b.ja}</td><td>${sign.glyph} ${sign.ja}</td>`
+      +`<td>${formatDeg(lon)}</td><td>${house??"-"}</td><td>${retro?"℞":""}</td></tr>`;
+  });
+  return html + "</table>";
+}
+
+function buildPrintHousesTable(natal){
+  let html = `<table class="pt"><caption style="text-align:left;font-weight:700;padding:2px 0">ハウス・カスプ</caption>`;
+  html += "<tr><th>ハウス</th><th>サイン</th><th>度数</th></tr>";
+  natal.Houses.forEach((h,i)=>{
+    const lon  = norm360(h.ChartPosition.StartPosition.Ecliptic.DecimalDegrees);
+    const sign = signOfLon(lon);
+    html += `<tr><td>${HOUSE_LABELS_JA[i]}ハウス</td><td>${sign.glyph} ${sign.ja}</td><td>${formatDeg(lon)}</td></tr>`;
+  });
+  return html + "</table>";
+}
+
+function buildPrintAspectTable(title, rowHoro, colHoro, color){
+  let html = `<table class="pt pt-aspect"><caption style="color:${color};text-align:left;font-weight:700;padding:2px 0">${title}</caption><tr><th></th>`;
+  BODIES.forEach(b=> html += `<th>${b.glyph}</th>`);
+  html += "</tr>";
+  BODIES.forEach((rb,ri)=>{
+    html += `<tr><th>${rb.glyph} ${rb.ja}</th>`;
+    BODIES.forEach((cb,ci)=>{
+      if(rowHoro===colHoro && ri===ci){ html += "<td>-</td>"; return; }
+      const asp = findAspect(bodyLon(rowHoro,rb.key), bodyLon(colHoro,cb.key));
+      html += asp ? `<td style="color:${asp.color};font-weight:bold">${asp.glyph}</td>` : "<td></td>";
+    });
+    html += "</tr>";
+  });
+  return html + "</table>";
+}
+
 function initPrint(){
   el("printBtn").addEventListener("click", ()=>{
-    window.print();
+    const p = getActive();
+    if(!profileIsComplete(p)){ alert("プロフィールを入力してください"); return; }
+
+    const natal = natalHoroscope(p);
+    const dt    = dateTimeFromProfile(p);
+    const svgEl2 = document.getElementById("wheel");
+    const svgHTML = svgEl2 ? svgEl2.outerHTML : "";
+
+    // プロフィール情報
+    const timeStr = p.timeUnknown ? "時刻不明(正午で仮算出)" : p.time;
+    const profileInfo = `
+      <div class="pinfo">
+        <span><strong>${p.name||"(名前未設定)"}</strong></span>
+        <span>生年月日: ${p.date} ${timeStr}</span>
+        <span>出生地: ${p.placeName||""} (${(p.lat||"").toString().slice(0,7)}, ${(p.lon||"").toString().slice(0,8)})</span>
+        <span>ハウスシステム: ${el("f_houseSystem").options[el("f_houseSystem").selectedIndex].text}</span>
+        <span>モード: ${el("chartTitle").textContent}</span>
+      </div>`;
+
+    // 天体配置テーブル
+    let dataSec = "";
+    const rings = [];
+    if(currentMode==="double"){
+      const transit = transitHoroscope(p, getTargetDate());
+      rings.push({key:"natal",horoscope:natal,color:RING_COLORS.natal});
+      rings.push({key:"transit",horoscope:transit,color:RING_COLORS.transit});
+    } else if(currentMode==="triple"){
+      const transit   = transitHoroscope(p, getTargetDate());
+      const progressed = progressedHoroscope(p, getTargetDate());
+      rings.push({key:"natal",horoscope:natal,color:RING_COLORS.natal});
+      rings.push({key:"progress",horoscope:progressed,color:RING_COLORS.progress});
+      rings.push({key:"transit",horoscope:transit,color:RING_COLORS.transit});
+    } else {
+      rings.push({key:"natal",horoscope:natal,color:RING_COLORS.natal});
+    }
+
+    rings.forEach(r=>{
+      dataSec += buildPrintBodiesTable(RING_LABELS[r.key]+"の天体配置", r.horoscope, r.color);
+    });
+    dataSec += buildPrintHousesTable(natal);
+
+    if(currentMode==="natal"){
+      dataSec += buildPrintAspectTable("アスペクト表(ネイタル×ネイタル)", natal, natal, RING_COLORS.natal);
+    } else if(currentMode==="double"){
+      const tr = rings.find(r=>r.key==="transit");
+      if(tr) dataSec += buildPrintAspectTable("アスペクト表(縦:ネイタル×横:トランジット)", natal, tr.horoscope, tr.color);
+    } else if(currentMode==="triple"){
+      const pr = rings.find(r=>r.key==="progress");
+      if(pr) dataSec += buildPrintAspectTable("アスペクト表(縦:ネイタル×横:プログレス)", natal, pr.horoscope, pr.color);
+    }
+
+    const win = window.open("","_blank");
+    win.document.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
+<title>ホロスコープ - ${p.name||""}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Hiragino Sans","Noto Sans JP",sans-serif;font-size:8pt;color:#222;background:#fff;padding:10mm;}
+@page{size:A4 portrait;margin:10mm;}
+h1{font-size:13pt;margin-bottom:4px;color:#555;}
+.pinfo{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:8pt;color:#444;margin-bottom:8px;border-bottom:1px solid #ccc;padding-bottom:6px;}
+.wheel-wrap{text-align:center;margin:6px 0;}
+.wheel-wrap svg{width:160mm;height:160mm;}
+.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
+.pt{width:100%;border-collapse:collapse;font-size:7pt;margin-bottom:6px;}
+.pt caption{font-size:8pt;margin-bottom:3px;}
+.pt th,.pt td{border:1px solid #ddd;padding:2px 4px;text-align:left;}
+.pt th{background:#f5f5f5;font-weight:600;}
+.pt-aspect{grid-column:1/-1;}
+.pt-aspect th,.pt-aspect td{text-align:center;padding:2px;}
+</style></head><body>
+<h1>ホロスコープ作成</h1>
+${profileInfo}
+<div class="wheel-wrap">${svgHTML}</div>
+<div class="data-grid">${dataSec}</div>
+</body></html>`);
+    win.document.close();
+    setTimeout(()=>{ win.focus(); win.print(); }, 600);
   });
 }
 
