@@ -15,16 +15,7 @@
     <h1>ホロスコープ作成</h1>
     <select id="profileSelect"></select>
     <button id="newProfileBtn" class="iconbtn" title="新しいプロフィール">＋</button>
-    <button id="addHomeBtn" class="iconbtn" title="ホーム画面に追加">🏠</button>
   </header>
-
-  <!-- ホーム追加ガイド -->
-  <div id="iosGuide" class="card hidden" style="padding:12px">
-    <p style="font-size:.85rem;margin:0 0 8px;font-weight:700">ホーム画面への追加方法</p>
-    <p style="font-size:.8rem;margin:0 0 4px">📱 <strong>Android(Brave/Chrome)</strong><br>ブラウザ右上のメニュー(⋮)→「ホーム画面に追加」</p>
-    <p style="font-size:.8rem;margin:0 0 8px">🍎 <strong>iPhone(Safari)</strong><br>下部の共有ボタン(□↑)→「ホーム画面に追加」</p>
-    <button id="iosGuideClose" class="small">閉じる</button>
-  </div>
 
   <!-- ===== プロフィール編集 ===== -->
   <section id="profileForm" class="card">
@@ -55,10 +46,10 @@
     </div>
     <div class="row twocol">
       <label>緯度
-        <input type="number" id="f_lat" step="0.0001" placeholder="例: 35.6895">
+        <input type="number" id="f_lat" step="0.0001" placeholder="35.6895">
       </label>
       <label>経度
-        <input type="number" id="f_lon" step="0.0001" placeholder="例: 139.6917">
+        <input type="number" id="f_lon" step="0.0001" placeholder="139.6917">
       </label>
     </div>
     <div class="row">
@@ -129,11 +120,11 @@
 
   <footer>
     <p>計算: astronomy-engine / circular-natal-horoscope-js (トロピカル黄道帯)</p>
-    <p>build v10</p>
+    <p>build v12</p>
   </footer>
 
 </div>
 <script src="astro.bundle.js"></script>
-<script src="app.js?v=10"></script>
+<script src="app.js?v=12"></script>
 </body>
 </html>
