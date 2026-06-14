@@ -7,18 +7,18 @@ const { Origin, Horoscope } = window.AstroLib;
 /* ---------- 定数 ---------- */
 
 const SIGNS = [
-  { key:"aries",       ja:"牡羊座", glyph:"♈", color:"#e2585f" },
-  { key:"taurus",      ja:"牡牛座", glyph:"♉", color:"#f0a04b" },
-  { key:"gemini",      ja:"双子座", glyph:"♊", color:"#4caf82" },
-  { key:"cancer",      ja:"蟹座",   glyph:"♋", color:"#4a90d9" },
-  { key:"leo",         ja:"獅子座", glyph:"♌", color:"#e2585f" },
-  { key:"virgo",       ja:"乙女座", glyph:"♍", color:"#f0a04b" },
-  { key:"libra",       ja:"天秤座", glyph:"♎", color:"#4caf82" },
-  { key:"scorpio",     ja:"蠍座",   glyph:"♏", color:"#4a90d9" },
-  { key:"sagittarius", ja:"射手座", glyph:"♐", color:"#e2585f" },
-  { key:"capricorn",   ja:"山羊座", glyph:"♑", color:"#f0a04b" },
-  { key:"aquarius",    ja:"水瓶座", glyph:"♒", color:"#4caf82" },
-  { key:"pisces",      ja:"魚座",   glyph:"♓", color:"#4a90d9" },
+  { key:"aries",       ja:"牡羊座", glyph:"♈", color:"#e2585f", bgColor:"rgba(226,88,95,.10)" },
+  { key:"taurus",      ja:"牡牛座", glyph:"♉", color:"#f0a04b", bgColor:"rgba(240,160,75,.10)" },
+  { key:"gemini",      ja:"双子座", glyph:"♊", color:"#4caf82", bgColor:"rgba(76,175,130,.10)" },
+  { key:"cancer",      ja:"蟹座",   glyph:"♋", color:"#4a90d9", bgColor:"rgba(74,144,217,.10)" },
+  { key:"leo",         ja:"獅子座", glyph:"♌", color:"#e2585f", bgColor:"rgba(226,88,95,.10)" },
+  { key:"virgo",       ja:"乙女座", glyph:"♍", color:"#f0a04b", bgColor:"rgba(240,160,75,.10)" },
+  { key:"libra",       ja:"天秤座", glyph:"♎", color:"#4caf82", bgColor:"rgba(76,175,130,.10)" },
+  { key:"scorpio",     ja:"蠍座",   glyph:"♏", color:"#4a90d9", bgColor:"rgba(74,144,217,.10)" },
+  { key:"sagittarius", ja:"射手座", glyph:"♐", color:"#e2585f", bgColor:"rgba(226,88,95,.10)" },
+  { key:"capricorn",   ja:"山羊座", glyph:"♑", color:"#f0a04b", bgColor:"rgba(240,160,75,.10)" },
+  { key:"aquarius",    ja:"水瓶座", glyph:"♒", color:"#4caf82", bgColor:"rgba(76,175,130,.10)" },
+  { key:"pisces",      ja:"魚座",   glyph:"♓", color:"#4a90d9", bgColor:"rgba(74,144,217,.10)" },
 ];
 
 // メジャーアスペクトの定義 (角度, 許容オーブ, グリフ, 色)
@@ -454,6 +454,20 @@ function renderWheel(natal, rings, ascDeg){
   // 黄道12星座
   for(let i=0;i<12;i++){
     const lonStart = i*30;
+    // パイスライス背景(パステルエレメント色)
+    const midAngleRad1 = (180 + (lonStart - ascDeg)) * Math.PI/180;
+    const midAngleRad2 = (180 + (lonStart+30 - ascDeg)) * Math.PI/180;
+    const ox1 = CX + ZODIAC_OUTER*Math.cos(midAngleRad1);
+    const oy1 = CY - ZODIAC_OUTER*Math.sin(midAngleRad1);
+    const ox2 = CX + ZODIAC_OUTER*Math.cos(midAngleRad2);
+    const oy2 = CY - ZODIAC_OUTER*Math.sin(midAngleRad2);
+    const ix1 = CX + ZODIAC_INNER*Math.cos(midAngleRad1);
+    const iy1 = CY - ZODIAC_INNER*Math.sin(midAngleRad1);
+    const ix2 = CX + ZODIAC_INNER*Math.cos(midAngleRad2);
+    const iy2 = CY - ZODIAC_INNER*Math.sin(midAngleRad2);
+    const pathD = `M${ix1},${iy1} L${ox1},${oy1} A${ZODIAC_OUTER},${ZODIAC_OUTER} 0 0,1 ${ox2},${oy2} L${ix2},${iy2} A${ZODIAC_INNER},${ZODIAC_INNER} 0 0,0 ${ix1},${iy1}Z`;
+    svgEl("path",{d:pathD, fill:SIGNS[i].bgColor, stroke:"none"},svg);
+
     const p1 = polar(lonStart, ascDeg, ZODIAC_INNER);
     const p2 = polar(lonStart, ascDeg, ZODIAC_OUTER);
     svgEl("line",{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,class:"zodiac-seg"},svg);
@@ -912,10 +926,11 @@ function renderEphemMonth(){
 
     rows.forEach(row=>{
       const isToday = (y===new Date().getFullYear() && m===new Date().getMonth() && row.date===new Date().getDate());
-      html += `<tr${isToday?' style="background:rgba(155,111,217,.12)"':''}>`;
+      html += `<tr${isToday?' style="outline:2px solid rgba(155,111,217,.4)"':''}>`;
       html += `<td class="month">${row.date}</td>`;
       row.bodies.forEach(b=>{
-        html += `<td><span style="color:${b.sign.color};font-size:.7rem">${b.sign.glyph}\uFE0E</span><br><span style="font-size:.68rem">${b.deg}</span></td>`;
+        const bg = b.sign.bgColor;
+        html += `<td style="background:${bg}"><span style="color:${b.sign.color};font-size:.7rem">${b.sign.glyph}\uFE0E</span><br><span style="font-size:.68rem">${b.deg}</span></td>`;
       });
       html += `</tr>`;
     });
