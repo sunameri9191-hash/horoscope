@@ -236,6 +236,7 @@ function init(){
       btn.classList.add("active");
       currentMode = btn.dataset.mode;
       el("chartTitle").textContent = (currentMode==="progress") ? "セカンダリープログレッション" : "ホロスコープ";
+      el("chartSubtitle").style.display = (currentMode==="progress") ? "block" : "none";
       updateTargetDateRow();
       renderAll();
     });
