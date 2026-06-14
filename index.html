@@ -20,18 +20,9 @@
 
   <!-- ホーム追加ガイド(iOS用) -->
   <div id="iosGuide" class="card hidden" style="text-align:center;padding:12px">
-    <p style="font-size:.85rem;margin:0 0 6px">iOSの場合: Safariの<strong>共有ボタン</strong>→「<strong>ホーム画面に追加</strong>」をタップしてください</p>
+    <p style="font-size:.85rem;margin:0 0 6px">iOSの場合: Safariの<strong>共有ボタン</strong>→「<strong>ホーム画面に追加</strong>」をタップ</p>
     <button id="iosGuideClose" class="small">閉じる</button>
   </div>
-
-  <!-- ===== 天文歴 ===== -->
-  <section class="card">
-    <h2>天文歴</h2>
-    <div class="row" style="margin-bottom:8px">
-      <div class="year-tabs" id="ephemYearTabs"></div>
-    </div>
-    <div id="ephemArea"><p class="note">年のタブを選ぶと表示されます</p></div>
-  </section>
 
   <!-- ===== プロフィール編集 ===== -->
   <section id="profileForm" class="card">
@@ -121,13 +112,26 @@
     <div id="dataTables"></div>
   </section>
 
+  <!-- ===== 天文歴(折りたたみ) ===== -->
+  <section class="card">
+    <button id="ephemToggle" style="width:100%;text-align:left;background:none;border:none;color:var(--accent);font-size:.95rem;font-weight:700;padding:0;cursor:pointer">▼ 天文歴を開く</button>
+    <div id="ephemBody" class="hidden">
+      <div class="row" style="align-items:center;margin-top:10px;gap:8px">
+        <button id="ephemPrev" class="small">◀</button>
+        <span id="ephemMonthLabel" style="font-size:.9rem;font-weight:700;flex:1;text-align:center"></span>
+        <button id="ephemNext" class="small">▶</button>
+      </div>
+      <div id="ephemArea"><p class="note">開いたとき自動表示されます</p></div>
+    </div>
+  </section>
+
   <footer>
     <p>計算: astronomy-engine / circular-natal-horoscope-js (トロピカル黄道帯)</p>
-    <p>build v8</p>
+    <p>build v9</p>
   </footer>
 
 </div>
 <script src="astro.bundle.js"></script>
-<script src="app.js?v=8"></script>
+<script src="app.js?v=9"></script>
 </body>
 </html>
