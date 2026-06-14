@@ -1327,7 +1327,7 @@ function buildEphemPrintMonth(year, month){
   rows.forEach(row=>{
     html += `<tr><td class="em-day">${row.date}</td>`;
     row.bodies.forEach(b=>{
-      html += `<td style="background:${b.sign.bgColor}"><span style="color:${b.sign.color};font-size:6pt">${b.sign.glyph}\uFE0E</span><br><span style="font-size:5.5pt">${b.deg}</span></td>`;
+      html += `<td style="background:${b.sign.bgColor}"><span style="color:${b.sign.color}">${b.sign.glyph}\uFE0E</span><br>${b.deg}</td>`;
     });
     html += `</tr>`;
   });
@@ -1373,16 +1373,32 @@ function initEphemPrint(){
     for(let i=0; i<months.length; i+=2) pages.push(months.slice(i,i+2));
 
     const css = `
-body{margin:0;padding:4mm 6mm;}
-@page{size:A4 portrait;margin:4mm 6mm;}
-.em-page{width:100%;height:277mm;overflow:hidden;page-break-after:always;display:grid;grid-template-rows:1fr 1fr;gap:3mm;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Hiragino Sans","Noto Sans JP",sans-serif;background:#fff;color:#222;}
+@page{size:A4 portrait;margin:5mm;}
+.em-page{
+  width:200mm;height:287mm;
+  display:flex;flex-direction:column;gap:2mm;
+  page-break-after:always;
+  padding:2mm;
+  overflow:hidden;
+}
 .em-page:last-child{page-break-after:auto;}
-.em-block{overflow:hidden;}
-.em-title{font-size:9pt;font-weight:700;margin-bottom:1.5mm;color:#555;}
-.em-table{width:100%;border-collapse:collapse;font-size:5pt;table-layout:fixed;}
-.em-table th,.em-table td{border:1px solid #ddd;padding:1px;text-align:center;line-height:1.25;overflow:hidden;}
-.em-table th{background:#f5f5f5;font-size:5.5pt;}
-.em-day{font-weight:700;font-size:5.5pt;width:14px;}
+.em-block{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.em-title{font-size:8.5pt;font-weight:700;color:#555;margin-bottom:1mm;flex-shrink:0;}
+.em-table{width:100%;border-collapse:collapse;table-layout:fixed;flex:1;}
+.em-table thead th{
+  border:1px solid #ccc;padding:0 1px;
+  text-align:center;font-size:5.5pt;
+  background:#f0f0f0;font-weight:600;
+  white-space:nowrap;overflow:hidden;
+}
+.em-table tbody td{
+  border:1px solid #ddd;padding:0;
+  text-align:center;font-size:4.5pt;
+  line-height:1.2;overflow:hidden;
+}
+.em-day{font-weight:700;font-size:5pt;background:#fafafa;}
 `;
     let allPages = "";
     pages.forEach(pair=>{
