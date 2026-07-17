@@ -9,9 +9,9 @@
 <link rel="stylesheet" href="style.css">
 <style>
 @media print {
-  .topbar, .chart-tabs, #targetDateRow, #progressControls,
+  .topbar, .chart-tabs, #natalDateRow, #targetDateRow, #progressControls,
   #profileToggleBtn, .row.buttons, #detailSection h2 + *,
-  .ephemcard, footer, #nowBtn, #newProfileBtn,
+  .ephemcard, footer, #nowBtn, #natalNowBtn, #newProfileBtn,
   #ephemToggle, #ephemBody, button { display:none !important; }
   .card { box-shadow:none !important; border:1px solid #ccc !important; }
   #printName { display:block !important; }
@@ -110,6 +110,12 @@
       <button class="subtab" data-prog="sun">☉ 太陽</button>
     </div>
 
+    <div id="natalDateRow" class="row hidden">
+      <label id="natalDateLabel">チャート日時(未指定なら生年月日を使用)
+        <input type="datetime-local" id="f_natalDate">
+      </label>
+      <button id="natalNowBtn" class="small">現在時刻にする</button>
+    </div>
     <div id="targetDateRow" class="row hidden">
       <label id="targetDateLabel">対象日時(トランジット)
         <input type="datetime-local" id="f_targetDate">
@@ -173,11 +179,11 @@
 
   <footer>
     <p>計算: astronomy-engine / circular-natal-horoscope-js (トロピカル黄道帯)</p>
-    <p>build v27</p>
+    <p>build v28</p>
   </footer>
 
 </div>
 <script src="astro.bundle.js"></script>
-<script src="app.js?v=27"></script>
+<script src="app.js?v=28"></script>
 </body>
 </html>

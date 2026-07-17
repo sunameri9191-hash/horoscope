@@ -257,6 +257,12 @@ function init(){
   });
   el("f_targetDate").addEventListener("change", renderAll);
 
+  el("natalNowBtn").addEventListener("click", ()=>{
+    setNatalDateToNow();
+    renderAll();
+  });
+  el("f_natalDate").addEventListener("change", renderAll);
+
   el("moonCalcBtn").addEventListener("click", ()=>{
     const p = getActive();
     if(!profileIsComplete(p)) return;
@@ -280,25 +286,43 @@ function setTargetDateToNow(){
   el("f_targetDate").value = str;
 }
 
+function setNatalDateToNow(){
+  const now = new Date();
+  const pad = (n)=>String(n).padStart(2,"0");
+  const str = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  el("f_natalDate").value = str;
+}
+
+// natalタブで日時が指定されている場合のみDateを返す(未指定ならnull=生年月日を使用)
+function getNatalOverrideDate(){
+  const v = el("f_natalDate").value;
+  if(!v) return null;
+  return new Date(v);
+}
+
 function updateTargetDateRow(){
   const row = el("targetDateRow");
   const label = el("targetDateLabel");
+  const natalRow = el("natalDateRow");
   const progressControls = el("progressControls");
   const chartArea = el("chartArea");
   const legend = el("legend");
 
   if(currentMode==="natal"){
     row.classList.add("hidden");
+    natalRow.classList.remove("hidden");
     progressControls.classList.add("hidden");
     chartArea.classList.remove("hidden");
     legend.classList.remove("hidden");
   }else if(currentMode==="progress"){
     row.classList.add("hidden");
+    natalRow.classList.add("hidden");
     progressControls.classList.remove("hidden");
     chartArea.classList.add("hidden");
     legend.classList.add("hidden");
   }else{
     row.classList.remove("hidden");
+    natalRow.classList.add("hidden");
     label.firstChild.textContent = "対象日時(トランジット)";
     progressControls.classList.add("hidden");
     chartArea.classList.remove("hidden");
@@ -683,16 +707,38 @@ function renderAll(){
   el("detailSection").classList.remove("hidden");
   el("progressResult").innerHTML = "";
 
-  const ascDeg = norm360(natal.Ascendant.ChartPosition.Ecliptic.DecimalDegrees);
+  // ネイタルタブで日時が指定されている場合、場所・ハウスシステムはプロフィールのまま
+  // その日時のチャートを表示する(未指定なら通常どおり生年月日のネイタルチャート)
+  let displayChart = natal;
+  const natalOverride = (currentMode==="natal") ? getNatalOverrideDate() : null;
+  if(natalOverride){
+    try{
+      displayChart = buildHoroscope(
+        natalOverride.getFullYear(), natalOverride.getMonth(), natalOverride.getDate(),
+        natalOverride.getHours(), natalOverride.getMinutes(),
+        p.lat, p.lon, p.houseSystem
+      );
+      displayChart.houseSystem = p.houseSystem;
+    }catch(e){
+      note.textContent = "計算中にエラーが発生しました: " + e.message;
+      return;
+    }
+  }
+
+  const wheelBase = (currentMode==="natal") ? displayChart : natal;
+  const ascDeg = norm360(wheelBase.Ascendant.ChartPosition.Ecliptic.DecimalDegrees);
 
   const rings = [];
   let notes = [];
   if(p.timeUnknown){
     notes.push("出生時刻が未入力のため、正午で仮算出しています。ハウス・アセンダント・月の正確な度数は目安としてご覧ください。");
   }
+  if(natalOverride){
+    notes.push("指定した日時のチャートを表示しています(場所・ハウスシステムはプロフィールと同じ)。");
+  }
 
   if(currentMode==="natal"){
-    rings.push({ key:"natal", color:RING_COLORS.natal, horoscope:natal });
+    rings.push({ key:"natal", color:RING_COLORS.natal, horoscope:displayChart });
   }else if(currentMode==="double"){
     const target = getTargetDate();
     const transit = transitHoroscope(p, target);
@@ -709,7 +755,7 @@ function renderAll(){
     notes.push("外側=トランジット、中央=プログレス、内側=ネイタル。ハウスはネイタルのものを使用しています。");
   }
 
-  renderWheel(natal, rings, ascDeg);
+  renderWheel(wheelBase, rings, ascDeg);
 
   // 凡例
   legend.innerHTML = rings.map(r=>
@@ -734,11 +780,11 @@ function renderAll(){
 
   // ハウスカスプはネイタルのみ
   if(currentMode==="natal"){
-    html += housesTable(natal);
+    html += housesTable(displayChart);
   }
 
   if(currentMode==="natal"){
-    html += aspectGridTable("アスペクト表(ネイタル × ネイタル)", natal, natal, RING_COLORS.natal, true);
+    html += aspectGridTable("アスペクト表(ネイタル × ネイタル)", displayChart, displayChart, RING_COLORS.natal, true);
   }else if(currentMode==="double"){
     const transitRing = rings.find(r=>r.key==="transit");
     if(transitRing){
