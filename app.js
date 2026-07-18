@@ -23,11 +23,11 @@ const SIGNS = [
 
 // メジャーアスペクトの定義 (角度, 許容オーブ, グリフ, 色)
 const ASPECTS = [
-  { name:"conjunction", angle:0,   orb:8, glyph:"☌", color:"#9b9186" },
-  { name:"sextile",     angle:60,  orb:6, glyph:"⚹", color:"#4a90d9" },
-  { name:"square",      angle:90,  orb:7, glyph:"□", color:"#d1486a" },
-  { name:"trine",       angle:120, orb:8, glyph:"△", color:"#4a90d9" },
-  { name:"opposition",  angle:180, orb:8, glyph:"☍", color:"#d1486a" },
+  { name:"conjunction", angle:0,   orb:6, glyph:"☌", color:"#9b9186" },
+  { name:"sextile",     angle:60,  orb:4, glyph:"⚹", color:"#4a90d9" },
+  { name:"square",      angle:90,  orb:5, glyph:"□", color:"#d1486a" },
+  { name:"trine",       angle:120, orb:6, glyph:"△", color:"#4a90d9" },
+  { name:"opposition",  angle:180, orb:6, glyph:"☍", color:"#d1486a" },
 ];
 
 function findAspect(lon1, lon2){
