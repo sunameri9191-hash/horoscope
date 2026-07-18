@@ -243,12 +243,6 @@ footer .changelog li{
   padding:2px 0;
   line-height:1.5;
 }
-footer .changelog-date{
-  color:var(--text-dim);
-  margin-right:6px;
-  font-variant-numeric:tabular-nums;
-  opacity:.8;
-}
 
 /* SVG element styles */
 .zodiac-ring{fill:none;}
