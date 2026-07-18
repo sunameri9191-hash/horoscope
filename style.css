@@ -224,6 +224,32 @@ footer{
   padding-top:8px;
 }
 
+footer .changelog{
+  max-width:360px;
+  margin:10px auto 0;
+  text-align:left;
+}
+footer .changelog-title{
+  text-align:center;
+  font-weight:600;
+  margin-bottom:4px;
+}
+footer .changelog ul{
+  list-style:none;
+  margin:0;
+  padding:0;
+}
+footer .changelog li{
+  padding:2px 0;
+  line-height:1.5;
+}
+footer .changelog-date{
+  color:var(--text-dim);
+  margin-right:6px;
+  font-variant-numeric:tabular-nums;
+  opacity:.8;
+}
+
 /* SVG element styles */
 .zodiac-ring{fill:none;}
 .zodiac-seg{stroke:var(--text-dim);stroke-width:1;}
