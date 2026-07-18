@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ホロスコープ">
 <title>ホロスコープ作成</title>
-<link rel="stylesheet" href="style.css?v=32">
+<link rel="stylesheet" href="style.css?v=33">
 <style>
 @media print {
   .topbar, .chart-tabs, #natalDateRow, #targetDateRow, #progressControls,
@@ -179,10 +179,11 @@
 
   <footer>
     <p>計算: astronomy-engine / circular-natal-horoscope-js (トロピカル黄道帯)</p>
-    <p>build v32</p>
+    <p>build v33</p>
     <div class="changelog">
-      <p class="changelog-title">更新履歴</p>
-      <ul>
+      <button id="changelogToggle" class="changelog-title">▼ 更新履歴</button>
+      <ul id="changelogBody" class="hidden">
+        <li>v33: 更新履歴をトグルで開閉できるようにしました</li>
         <li>v32: 更新履歴欄から日付表記を削除しました</li>
         <li>v31: 更新履歴欄を追加しました</li>
         <li>v30: アスペクトのオーブを絞りました</li>
@@ -194,6 +195,6 @@
 
 </div>
 <script src="astro.bundle.js"></script>
-<script src="app.js?v=32"></script>
+<script src="app.js?v=33"></script>
 </body>
 </html>

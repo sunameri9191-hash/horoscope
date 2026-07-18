@@ -1476,7 +1476,20 @@ body{font-family:"Hiragino Sans","Noto Sans JP",sans-serif;background:#fff;color
   });
 }
 
+function initChangelogToggle(){
+  const btn  = el("changelogToggle");
+  const body = el("changelogBody");
+  let open   = false;
+
+  btn.addEventListener("click", ()=>{
+    open = !open;
+    body.classList.toggle("hidden", !open);
+    btn.textContent = (open ? "▲" : "▼") + " 更新履歴";
+  });
+}
+
 initProfileToggle();
+initChangelogToggle();
 initProgressSubTabs();
 initPrint();
 initEphemPrint();

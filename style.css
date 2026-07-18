@@ -230,9 +230,17 @@ footer .changelog{
   text-align:left;
 }
 footer .changelog-title{
+  display:block;
+  width:100%;
   text-align:center;
+  font:inherit;
   font-weight:600;
-  margin-bottom:4px;
+  color:inherit;
+  background:none;
+  border:none;
+  padding:0;
+  margin:0 0 4px;
+  cursor:pointer;
 }
 footer .changelog ul{
   list-style:none;
