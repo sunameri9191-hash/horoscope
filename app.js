@@ -1381,6 +1381,21 @@ function buildEphemPrintMonth(year, month){
   return html;
 }
 
+function openEphemPrintWindow(titleStr, bodyHTML, printCSS){
+  const win = window.open("","_blank");
+  win.document.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
+<title>${titleStr}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Hiragino Sans","Noto Sans JP",sans-serif;color:#222;background:#fff;}
+${printCSS||""}
+</style></head><body>
+${bodyHTML}
+</body></html>`);
+  win.document.close();
+  setTimeout(()=>{ win.focus(); win.print(); }, 700);
+}
+
 function initEphemPrint(){
   const printBtn   = el("ephemPrintBtn");
   const modal      = el("ephemPrintModal");
@@ -1454,9 +1469,9 @@ body{font-family:"Hiragino Sans","Noto Sans JP",sans-serif;background:#fff;color
       allPages += pg;
     });
 
-    openPrintWindow(
+    openEphemPrintWindow(
       `天文歴 ${sy}年${MONTH_JA[sm-1]}〜${ey}年${MONTH_JA[em-1]}`,
-      "", "", allPages, css
+      allPages, css
     );
   });
 }
