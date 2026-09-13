@@ -397,9 +397,39 @@ function buildHoroscope(year,month,date,hour,minute,lat,lon,houseSystem){
   });
 }
 
+const SOLAR_HOUSE_LABEL = "イコールハウス(太陽基準)";
+
+// 出生時刻不明の場合、太陽の星座の0度を1ハウスの始点とするイコールハウスを強制適用する
+// (例: 魚座太陽なら1ハウス=魚座0度〜、2ハウス=牡羊座0度〜 ...)
+function applySolarEqualHouses(horoscope){
+  const sunLon = norm360(horoscope.CelestialBodies.sun.ChartPosition.Ecliptic.DecimalDegrees);
+  const house1Cusp = Math.floor(sunLon/30)*30;
+
+  horoscope.Houses.forEach((house,i)=>{
+    house.ChartPosition.StartPosition.Ecliptic.DecimalDegrees = norm360(house1Cusp + i*30);
+  });
+  horoscope.Ascendant.ChartPosition.Ecliptic.DecimalDegrees = house1Cusp;
+
+  const houseIndexForLon = (lon)=> Math.floor(norm360(norm360(lon) - house1Cusp)/30) % 12;
+
+  Object.keys(horoscope.CelestialBodies).forEach(key=>{
+    if(key==="all") return;
+    const body = horoscope.CelestialBodies[key];
+    body.House = horoscope.Houses[houseIndexForLon(body.ChartPosition.Ecliptic.DecimalDegrees)];
+  });
+  ["northnode","southnode","lilith"].forEach(key=>{
+    const pt = horoscope.CelestialPoints[key];
+    if(pt && pt.House){
+      pt.House = horoscope.Houses[houseIndexForLon(pt.ChartPosition.Ecliptic.DecimalDegrees)];
+    }
+  });
+}
+
 function natalHoroscope(p){
   const dt = dateTimeFromProfile(p);
-  return buildHoroscope(dt.year,dt.month,dt.date,dt.hour,dt.minute,p.lat,p.lon,p.houseSystem);
+  const h = buildHoroscope(dt.year,dt.month,dt.date,dt.hour,dt.minute,p.lat,p.lon,p.houseSystem);
+  if(p.timeUnknown) applySolarEqualHouses(h);
+  return h;
 }
 
 function transitHoroscope(p, targetDate){
@@ -690,7 +720,7 @@ function renderAll(){
     note.textContent = "計算中にエラーが発生しました: " + e.message;
     return;
   }
-  natal.houseSystem = el("f_houseSystem").value;
+  natal.houseSystem = p.timeUnknown ? SOLAR_HOUSE_LABEL : el("f_houseSystem").value;
 
   if(currentMode==="progress"){
     el("wheel").innerHTML = "";
@@ -698,7 +728,7 @@ function renderAll(){
     el("detailSection").classList.add("hidden");
     note.textContent = "「表示開始年」を入力して「計算する」を押すと、その時点でプログレス・ムーンが滞在しているハウスから1サイクル(約27年)分のイングレス日が一覧表示されます。";
     if(p.timeUnknown){
-      note.textContent += " 出生時刻が未入力のため、正午で仮算出しています。";
+      note.textContent += " 出生時刻が未入力のため、ハウスは太陽星座を1ハウスとするイコールハウスで仮算出しています。";
     }
     if(!el("f_moonFromYear").value) el("f_moonFromYear").value = new Date().getFullYear();
     el("progressResult").innerHTML = "<p class='note'>「計算する」を押すと結果が表示されます。</p>";
@@ -731,7 +761,7 @@ function renderAll(){
   const rings = [];
   let notes = [];
   if(p.timeUnknown){
-    notes.push("出生時刻が未入力のため、正午で仮算出しています。ハウス・アセンダント・月の正確な度数は目安としてご覧ください。");
+    notes.push("出生時刻が未入力のため、ハウスは太陽星座を1ハウスとするイコールハウスで表示しています(実際の出生時刻がわかれば変わります)。アセンダント・月の正確な度数は目安としてご覧ください。");
   }
   if(natalOverride){
     notes.push("指定した日時のチャートを表示しています(場所・ハウスシステムはプロフィールと同じ)。");
@@ -1332,7 +1362,7 @@ function initPrint(){
       <span><strong>${p.name||"(名前未設定)"}</strong></span>
       <span>生年月日: ${p.date} ${timeStr}</span>
       <span>出生地: ${p.placeName||""} (${(p.lat||"").toString().slice(0,7)}, ${(p.lon||"").toString().slice(0,8)})</span>
-      <span>ハウスシステム: ${el("f_houseSystem").options[el("f_houseSystem").selectedIndex].text}</span>
+      <span>ハウスシステム: ${p.timeUnknown ? SOLAR_HOUSE_LABEL : el("f_houseSystem").options[el("f_houseSystem").selectedIndex].text}</span>
       <span>モード: ${el("chartTitle").textContent}</span>
     </div>`;
 
